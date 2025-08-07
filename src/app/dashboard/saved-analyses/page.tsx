@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SavedAnalysis } from '@/lib/types';
@@ -10,7 +10,7 @@ import { es } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
-import { Trash2, Bot, Loader2 } from 'lucide-react';
+import { Trash2, Bot, Loader2, ChevronsUpDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -26,6 +26,8 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 // Custom renderer for tables to add ShadCN styling
 function MarkdownTable({ children }: { children: React.ReactNode }) {
@@ -65,14 +67,29 @@ interface AnalysisCardProps {
 function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
     const { toast } = useToast();
     const [isLoadingCounter, setIsLoadingCounter] = useState(false);
+    const [showCounterInput, setShowCounterInput] = useState(false);
+    const [externalAnalysis, setExternalAnalysis] = useState('');
     const [counterResult, setCounterResult] = useState<string | null>(null);
+    const counterResultRef = useRef<HTMLDivElement>(null);
     const { introduction, detailedAnalysis, valueTableAndRecs } = getAnalysisParts(analysis.content);
 
-    const handleCounterAnalysis = async () => {
+    const handleGenerateCounterAnalysis = async () => {
+        if (!externalAnalysis.trim()) {
+            toast({
+                variant: 'destructive',
+                title: 'Texto requerido',
+                description: 'Por favor, pega el análisis externo en el área de texto.',
+            });
+            return;
+        }
+
         setIsLoadingCounter(true);
         setCounterResult(null);
         try {
-            const { counterAnalysis: result } = await counterAnalysis({ originalAnalysis: analysis.content });
+            const { counterAnalysis: result } = await counterAnalysis({ 
+                originalAnalysis: analysis.content,
+                externalAnalysis: externalAnalysis
+            });
             setCounterResult(result);
         } catch (error) {
             console.error("Error fetching counter-analysis:", error);
@@ -85,6 +102,12 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
             setIsLoadingCounter(false);
         }
     };
+    
+    useEffect(() => {
+        if (counterResult) {
+            counterResultRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [counterResult]);
 
     return (
         <Card>
@@ -117,24 +140,59 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
+                
+                <div className="mt-6 border-t pt-4">
+                    {!showCounterInput && (
+                         <Button onClick={() => setShowCounterInput(true)} variant="outline" size="sm">
+                            <ChevronsUpDown className="mr-2 h-4 w-4" />
+                            Contrastar con Análisis Externo
+                        </Button>
+                    )}
 
-                {isLoadingCounter && (
+                    {showCounterInput && !counterResult && (
+                        <div className="space-y-4">
+                             <Label htmlFor={`external-analysis-${analysis.id}`}>Pega aquí el análisis de otra fuente para obtener una respuesta crítica de "iaedge"</Label>
+                             <Textarea 
+                                id={`external-analysis-${analysis.id}`}
+                                value={externalAnalysis}
+                                onChange={(e) => setExternalAnalysis(e.target.value)}
+                                placeholder="Pega el texto del análisis externo aquí..."
+                                rows={8}
+                                className="text-xs"
+                             />
+                             <div className="flex gap-2">
+                                <Button onClick={handleGenerateCounterAnalysis} disabled={isLoadingCounter} size="sm">
+                                    {isLoadingCounter ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Bot className="mr-2 h-4 w-4" />
+                                    )}
+                                    Generar Contra-Análisis
+                                </Button>
+                                <Button onClick={() => setShowCounterInput(false)} variant="ghost" size="sm" disabled={isLoadingCounter}>Cancelar</Button>
+                             </div>
+                        </div>
+                    )}
+                </div>
+
+
+                {isLoadingCounter && !counterResult && (
                      <div className="space-y-4 pt-4">
                         <div className="flex items-center gap-2 text-primary">
                             <Loader2 className="h-5 w-5 animate-spin" />
-                            <p className="text-sm font-medium">"iaedge" está contrastando el análisis...</p>
+                            <p className="text-sm font-medium">"iaedge" está contrastando ambos análisis...</p>
                         </div>
                         <Skeleton className="h-32 w-full" />
                     </div>
                 )}
                 
                 {counterResult && (
-                    <div className="space-y-4 pt-6 border-t mt-4">
+                    <div className="space-y-4 pt-6 border-t mt-4" ref={counterResultRef}>
                         <Alert variant="default" className="border-blue-500 bg-blue-500/10">
                            <Bot className="h-4 w-4 text-blue-500" />
-                           <AlertTitle>Contra-Análisis por iaedge</AlertTitle>
+                           <AlertTitle>Síntesis y Contra-Análisis por iaedge</AlertTitle>
                            <AlertDescription>
-                               Aquí tienes una segunda opinión para un análisis más robusto.
+                               Se ha combinado tu análisis guardado con la información externa proporcionada.
                            </AlertDescription>
                        </Alert>
                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
@@ -168,17 +226,6 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
-                
-                {!counterResult && (
-                    <Button onClick={handleCounterAnalysis} disabled={isLoadingCounter} variant="outline" size="sm">
-                        {isLoadingCounter ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Bot className="mr-2 h-4 w-4" />
-                        )}
-                        Obtener Segunda Opinión
-                    </Button>
-                )}
             </CardFooter>
         </Card>
     );
@@ -278,7 +325,7 @@ export default function SavedAnalysesPage() {
         <div className="space-y-8">
             <h1 className="text-3xl font-bold tracking-tight">Análisis Guardados</h1>
             <p className="text-muted-foreground">
-                Revisa, gestiona y mejora tus análisis guardados con una segunda opinión de IA.
+                Contrasta tus análisis guardados con información de otras fuentes para una decisión más robusta.
             </p>
             <div className="space-y-6">
                 {analyses.map(analysis => (
