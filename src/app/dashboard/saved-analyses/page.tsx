@@ -10,7 +10,7 @@ import { es } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Bot, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -24,6 +24,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { counterAnalysis } from '@/ai/flows/counter-analysis';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 // Custom renderer for tables to add ShadCN styling
 function MarkdownTable({ children }: { children: React.ReactNode }) {
@@ -54,6 +56,133 @@ const getAnalysisParts = (content: string) => {
         valueTableAndRecs: valueTableAndRecsMatch ? valueTableAndRecsMatch[1] : ''
     };
 };
+
+interface AnalysisCardProps {
+    analysis: SavedAnalysis;
+    onDelete: (id: string) => void;
+}
+
+function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
+    const { toast } = useToast();
+    const [isLoadingCounter, setIsLoadingCounter] = useState(false);
+    const [counterResult, setCounterResult] = useState<string | null>(null);
+    const { introduction, detailedAnalysis, valueTableAndRecs } = getAnalysisParts(analysis.content);
+
+    const handleCounterAnalysis = async () => {
+        setIsLoadingCounter(true);
+        setCounterResult(null);
+        try {
+            const { counterAnalysis: result } = await counterAnalysis({ originalAnalysis: analysis.content });
+            setCounterResult(result);
+        } catch (error) {
+            console.error("Error fetching counter-analysis:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'No se pudo obtener la segunda opinión.',
+            });
+        } finally {
+            setIsLoadingCounter(false);
+        }
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-xl">{analysis.title}</CardTitle>
+                <CardDescription>
+                    Guardado el {format(analysis.createdAt, "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                    {introduction}
+                </ReactMarkdown>
+                
+                <div className="py-4">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {valueTableAndRecs}
+                    </ReactMarkdown>
+                </div>
+                
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="item-1" className="border-none -mt-4">
+                        <AccordionTrigger className="text-sm text-primary hover:no-underline justify-start gap-1 py-2">
+                            <span>Ver Análisis Completo</span>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                {detailedAnalysis}
+                            </ReactMarkdown>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+
+                {isLoadingCounter && (
+                     <div className="space-y-4 pt-4">
+                        <div className="flex items-center gap-2 text-primary">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <p className="text-sm font-medium">"iaedge" está contrastando el análisis...</p>
+                        </div>
+                        <Skeleton className="h-32 w-full" />
+                    </div>
+                )}
+                
+                {counterResult && (
+                    <div className="space-y-4 pt-6 border-t mt-4">
+                        <Alert variant="default" className="border-blue-500 bg-blue-500/10">
+                           <Bot className="h-4 w-4 text-blue-500" />
+                           <AlertTitle>Contra-Análisis por iaedge</AlertTitle>
+                           <AlertDescription>
+                               Aquí tienes una segunda opinión para un análisis más robusto.
+                           </AlertDescription>
+                       </Alert>
+                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                           {counterResult}
+                       </ReactMarkdown>
+                   </div>
+                )}
+
+
+            </CardContent>
+            <CardFooter className="flex-wrap gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente el análisis guardado.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => onDelete(analysis.id)}>
+                        Sí, eliminar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                
+                {!counterResult && (
+                    <Button onClick={handleCounterAnalysis} disabled={isLoadingCounter} variant="outline" size="sm">
+                        {isLoadingCounter ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Bot className="mr-2 h-4 w-4" />
+                        )}
+                        Obtener Segunda Opinión
+                    </Button>
+                )}
+            </CardFooter>
+        </Card>
+    );
+}
 
 
 export default function SavedAnalysesPage() {
@@ -109,16 +238,16 @@ export default function SavedAnalysesPage() {
         return (
             <div className="space-y-8">
                 <h1 className="text-3xl font-bold tracking-tight">Análisis Guardados</h1>
-                <p className="text-muted-foreground">Revisa, gestiona y elimina tus análisis guardados.</p>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {[...Array(3)].map((_, i) => (
+                <p className="text-muted-foreground">Revisa, gestiona y mejora tus análisis guardados.</p>
+                <div className="space-y-6">
+                    {[...Array(2)].map((_, i) => (
                         <Card key={i}>
                             <CardHeader>
                                 <Skeleton className="h-6 w-3/4" />
                                 <Skeleton className="h-4 w-1/2" />
                             </CardHeader>
                             <CardContent>
-                                <Skeleton className="h-20 w-full" />
+                                <Skeleton className="h-28 w-full" />
                             </CardContent>
                             <CardFooter>
                                 <Skeleton className="h-8 w-24" />
@@ -134,7 +263,7 @@ export default function SavedAnalysesPage() {
         return (
             <div className="space-y-8 text-center">
                  <h1 className="text-3xl font-bold tracking-tight">Análisis Guardados</h1>
-                 <p className="text-muted-foreground">Revisa, gestiona y elimina tus análisis guardados.</p>
+                 <p className="text-muted-foreground">Revisa, gestiona y mejora tus análisis guardados.</p>
                 <div className="mt-12">
                     <h3 className="text-xl font-semibold">No tienes análisis guardados</h3>
                     <p className="text-muted-foreground mt-2">
@@ -149,71 +278,12 @@ export default function SavedAnalysesPage() {
         <div className="space-y-8">
             <h1 className="text-3xl font-bold tracking-tight">Análisis Guardados</h1>
             <p className="text-muted-foreground">
-                Revisa, gestiona y elimina tus análisis guardados.
+                Revisa, gestiona y mejora tus análisis guardados con una segunda opinión de IA.
             </p>
             <div className="space-y-6">
-                {analyses.map(analysis => {
-                    const { introduction, detailedAnalysis, valueTableAndRecs } = getAnalysisParts(analysis.content);
-                    return (
-                        <Card key={analysis.id}>
-                            <CardHeader>
-                                <CardTitle className="text-xl">{analysis.title}</CardTitle>
-                                <CardDescription>
-                                    Guardado el {format(analysis.createdAt, "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                    {introduction}
-                                </ReactMarkdown>
-                                
-                                <div className="py-4">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                        {valueTableAndRecs}
-                                    </ReactMarkdown>
-                                </div>
-                                
-                                <Accordion type="single" collapsible className="w-full">
-                                    <AccordionItem value="item-1" className="border-none -mt-4">
-                                        <AccordionTrigger className="text-sm text-primary hover:no-underline justify-start gap-1 py-2">
-                                            <span>Ver Análisis Completo</span>
-                                        </AccordionTrigger>
-                                        <AccordionContent>
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                                {detailedAnalysis}
-                                            </ReactMarkdown>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                </Accordion>
-
-                            </CardContent>
-                            <CardFooter>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="sm">
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        Eliminar
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Esta acción no se puede deshacer. Esto eliminará permanentemente el análisis guardado.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                      <AlertDialogAction onClick={() => deleteAnalysis(analysis.id)}>
-                                        Sí, eliminar
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                            </CardFooter>
-                        </Card>
-                    )
-                })}
+                {analyses.map(analysis => (
+                   <AnalysisCard key={analysis.id} analysis={analysis} onDelete={deleteAnalysis} />
+                ))}
             </div>
         </div>
     );
