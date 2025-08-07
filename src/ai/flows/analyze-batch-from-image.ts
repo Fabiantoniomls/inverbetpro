@@ -4,21 +4,19 @@
  * @fileOverview Implements the batch analysis from image flow.
  *
  * This flow takes an image of a betting slip, extracts match data using a multimodal model,
- * runs fundamental analysis on each match, and returns a consolidated result.
+ * and generates a consolidated, expert-style analysis report for all matches.
  *
  * - analyzeBatchFromImage - The main function for the flow.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { fundamentalAnalysis } from './fundamental-analysis';
 import { 
     ExtractedMatchSchema, 
     AnalyzeBatchFromImageInputSchema, 
     AnalyzeBatchFromImageOutputSchema,
     type AnalyzeBatchFromImageInput,
     type AnalyzeBatchFromImageOutput,
-    type FundamentalAnalysisInput,
 } from '@/lib/types/analysis';
 
 
@@ -50,6 +48,41 @@ Ejemplo de Salida JSON Esperada:
 Photo: {{media url=photoDataUri}}`
 });
 
+const consolidatedAnalysisPrompt = ai.definePrompt({
+  name: 'consolidatedAnalysisPrompt',
+  input: { schema: z.object({ matchesJson: z.string() }) },
+  output: { schema: AnalyzeBatchFromImageOutputSchema },
+  prompt: `
+  Eres "Inverapuestas Pro", un analista deportivo experto de IA, especializado en encontrar apuestas de valor (+EV). Tu estilo es directo, visual y lleno de "insights". Te han proporcionado una lista de partidos de tenis y fútbol en formato JSON. Tu tarea es generar un informe de análisis completo en formato Markdown, en español.
+
+  El informe debe tener la siguiente estructura:
+
+  1.  **Análisis Detallado de Partidos Destacados:**
+      *   Para cada partido, presenta un análisis conciso pero potente.
+      *   Incluye emojis para hacerlo más visual (ej. 💥, 🚀, 💎 para sorpresas, ✅ para valor, ❌ para no valor).
+      *   Menciona datos clave: estado de forma, H2H (si es relevante), estadísticas importantes.
+      *   Calcula y muestra la "Probabilidad real" estimada por ti para cada resultado.
+      *   Calcula y muestra el "Valor apuesta" (EV = (Probabilidad Real * Cuota) - 1). Marca si hay valor o no.
+
+  2.  **Conclusiones Rápidas Otros Partidos:**
+      *   Si hay partidos menos interesantes, menciónalos brevemente aquí.
+
+  3.  **TABLA DE APUESTAS DE VALOR:**
+      *   Crea una tabla en Markdown con las columnas: | Partido | Resultado | Cuotas | Prob. Estimada (%) | Valor Calculado |
+      *   **Importante:** Incluye en esta tabla ÚNICAMENTE las apuestas con valor positivo (EV > 0).
+      *   **Crítico:** Ordena la tabla de MAYOR a MENOR "Valor Calculado".
+
+  4.  **Recomendaciones Finales:**
+      *   Ofrece 2-3 recomendaciones clave basadas en el análisis, destacando las mejores oportunidades.
+      *   Añade una nota final de estrategia si es necesario.
+
+  Utiliza el siguiente JSON de partidos para generar tu informe:
+  {{{matchesJson}}}
+
+  Adopta un tono profesional pero accesible. ¡Sorpréndeme con tu capacidad de análisis!
+  `
+});
+
 
 const analyzeBatchFromImageFlow = ai.defineFlow(
   {
@@ -60,81 +93,19 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
   async (input) => {
     // Step 1: Extract data from image
     const { output } = await extractMatchesPrompt(input);
-    if (!output?.matches) {
-      throw new Error("Could not extract any matches from the image.");
+    if (!output?.matches || output.matches.length === 0) {
+      throw new Error("No se pudo extraer ningún partido de la imagen.");
     }
     const extractedMatches = output.matches;
 
-    // Step 2: Iterative Analysis
-    const analysisPromises = extractedMatches.map(async (match) => {
-      // Find the most likely bet (highest probability implied by lowest odds)
-      const oddsValues = Object.values(match.odds).filter(v => v !== undefined) as number[];
-      const minOdd = Math.min(...oddsValues);
-      const impliedProbability = (1 / minOdd) * 100;
+    // Step 2: Generate consolidated analysis
+    const analysisInput = { matchesJson: JSON.stringify(extractedMatches, null, 2) };
+    const analysisResult = await consolidatedAnalysisPrompt(analysisInput);
 
-      const analysisInput: FundamentalAnalysisInput = {
-        matchDescription: match.participants,
-        teamAStrengths: 'Fortalezas no especificadas en imagen.',
-        teamAWeaknesses: 'Debilidades no especificadas en imagen.',
-        teamBStrengths: 'Fortalezas no especificadas en imagen.',
-        teamBWeaknesses: 'Debilidades no especificadas en imagen.',
-        keyPlayerTeamA: 'No especificado',
-        keyPlayerTeamB: 'No especificado',
-        odds: minOdd,
-        impliedProbability: impliedProbability,
-      };
-
-      const result = await fundamentalAnalysis(analysisInput);
-      
-      // Parse the markdown table to find the value
-      const valueRow = result.valueTable.split('\n').find(row => row.includes('**Apostar**'));
-      let valueCalculated = -1; // Default to no value
-      if (valueRow) {
-          const cells = valueRow.split('|').map(c => c.trim());
-          const evCell = cells[4];
-          if(evCell) {
-            const evMatch = evCell.match(/[+-]?\d+(\.\d+)?/);
-            if (evMatch) {
-              valueCalculated = parseFloat(evMatch[0]);
-            }
-          }
-      }
-
-      return {
-        match: match.participants,
-        analysis: result.analysis,
-        valueTableData: {
-          match: match.participants,
-          outcome: valueRow ? valueRow.split('|')[1].trim() : 'N/A',
-          odds: minOdd.toFixed(2),
-          estimatedProbability: valueRow ? valueRow.split('|')[2].trim() : 'N/A',
-          valueCalculated: valueCalculated,
-        }
-      };
-    });
-
-    const individualResults = await Promise.all(analysisPromises);
-
-    // Step 3: Consolidate results
-    const detailedAnalyses = individualResults.map(({ match, analysis }) => ({ match, analysis }));
-    
-    const valueBets = individualResults
-      .map(r => r.valueTableData)
-      .filter(v => v.valueCalculated > 0)
-      .sort((a, b) => b.valueCalculated - a.valueCalculated);
-
-    let summaryValueTable = `| Partido | Resultado | Cuotas | Su Probabilidad Estimada (%) | Valor Calculado |\n|---|---|---|---|---|\n`;
-    if (valueBets.length > 0) {
-      valueBets.forEach(bet => {
-        summaryValueTable += `| ${bet.match} | ${bet.outcome} | ${bet.odds} | ${bet.estimatedProbability} | ${bet.valueCalculated.toFixed(3)} |\n`;
-      });
-    } else {
-        summaryValueTable += `| No se encontraron apuestas de valor en la imagen. | - | - | - | - |\n`;
+    if (!analysisResult.output) {
+      throw new Error("No se pudo generar el análisis consolidado.");
     }
 
-    return {
-      detailedAnalyses,
-      summaryValueTable,
-    };
+    return analysisResult.output;
   }
 );

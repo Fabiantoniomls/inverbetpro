@@ -4,13 +4,7 @@ import { z } from 'zod';
 export const ExtractedMatchSchema = z.object({
     sport: z.enum(['Fútbol', 'Tenis']),
     participants: z.string().describe('Names of the teams or players.'),
-    odds: z.object({
-      local: z.number().optional().describe('Odds for home team win.'),
-      draw: z.number().optional().describe('Odds for a draw.'),
-      visitor: z.number().optional().describe('Odds for away team win.'),
-      player1: z.number().optional().describe('Odds for player 1 to win.'),
-      player2: z.number().optional().describe('Odds for player 2 to win.'),
-    }),
+    odds: z.record(z.string(), z.number()).describe('A record of outcomes and their decimal odds.'),
   });
 export type ExtractedMatch = z.infer<typeof ExtractedMatchSchema>;
   
@@ -26,11 +20,7 @@ export type AnalyzeBatchFromImageInput = z.infer<typeof AnalyzeBatchFromImageInp
 
 
 export const AnalyzeBatchFromImageOutputSchema = z.object({
-    detailedAnalyses: z.array(z.object({
-        match: z.string(),
-        analysis: z.string(),
-    })).describe("An array of detailed analyses for each match."),
-    summaryValueTable: z.string().describe("A single markdown table summarizing all value bets found, ordered by value.")
+    consolidatedAnalysis: z.string().describe("A single string containing the full, formatted markdown analysis for all matches."),
 });
 export type AnalyzeBatchFromImageOutput = z.infer<typeof AnalyzeBatchFromImageOutputSchema>;
 

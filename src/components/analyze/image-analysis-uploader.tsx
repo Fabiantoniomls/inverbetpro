@@ -3,43 +3,41 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { AlertCircle, ArrowLeft, CheckCircle, ImageUp, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import type { AnalyzeBatchFromImageOutput } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent } from '../ui/card';
 
-function MarkdownTable({ markdown }: { markdown: string }) {
-    if (!markdown) return null;
-    const rows = markdown.trim().split('\n').map(row => row.split('|').map(cell => cell.trim()).filter(Boolean));
-    if (rows.length < 2) return <p>{markdown}</p>;
-
-    const header = rows[0];
-    const body = rows.slice(2);
-
+// Custom renderer for tables to add ShadCN styling
+function MarkdownTable({ children }: { children: React.ReactNode }) {
     return (
-        <div className="overflow-x-auto rounded-lg border">
-            <table className="min-w-full">
-                <thead className="bg-muted/50">
-                    <tr>
-                        {header.map((h, i) => <th key={i} className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{h}</th>)}
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                    {body.map((row, i) => (
-                        <tr key={i} className="hover:bg-muted/50">
-                            {row.map((cell, j) => <td key={j} className="px-4 py-3 whitespace-nowrap text-sm">{cell.replace(/\*\*/g, '')}</td>)}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+        <div className="overflow-x-auto rounded-lg border my-4">
+            <table className="min-w-full divide-y divide-border">{children}</table>
         </div>
-    )
+    );
 }
 
+function MarkdownTHead({ children }: { children: React.ReactNode }) {
+    return <thead className="bg-muted/50">{children}</thead>;
+}
+
+function MarkdownTr({ children }: { children: React.ReactNode }) {
+    return <tr className="hover:bg-muted/50">{children}</tr>;
+}
+
+function MarkdownTh({ children }: { children: React.ReactNode }) {
+    return <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{children}</th>;
+}
+
+function MarkdownTd({ children }: { children: React.ReactNode }) {
+    return <td className="px-4 py-3 whitespace-nowrap text-sm">{children}</td>;
+}
 
 export function ImageAnalysisUploader() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -109,11 +107,9 @@ export function ImageAnalysisUploader() {
                 <p className="text-lg font-medium">Analizando partidos en la imagen...</p>
             </div>
             <div className="space-y-2">
-                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-8 w-3/4" />
                 <Skeleton className="h-24 w-full" />
-            </div>
-            <div className="space-y-2">
-                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-8 w-3/4" />
                 <Skeleton className="h-24 w-full" />
             </div>
             <h3 className="text-lg font-semibold pt-4">Tabla de Valor Resumida</h3>
@@ -124,37 +120,35 @@ export function ImageAnalysisUploader() {
 
   if (result) {
     return (
-        <div className="space-y-6">
-            <Alert variant="default" className="border-green-500">
+        <CardContent className="space-y-6">
+             <Alert variant="default" className="border-green-500 bg-green-500/10">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <AlertTitle>Análisis Completado</AlertTitle>
                 <AlertDescription>
-                    Se han analizado {result.detailedAnalyses.length} partidos. Revisa los detalles a continuación.
+                    Se ha generado tu informe de valor. ¡Revisa las mejores oportunidades!
                 </AlertDescription>
             </Alert>
-
-            <h3 className="text-lg font-semibold">Análisis Detallados</h3>
-            <Accordion type="single" collapsible className="w-full">
-                {result.detailedAnalyses.map((item, index) => (
-                    <AccordionItem value={`item-${index}`} key={index}>
-                        <AccordionTrigger>{item.match}</AccordionTrigger>
-                        <AccordionContent>
-                           {item.analysis}
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
-            
-            <h3 className="text-lg font-semibold">Tabla de Valor Resumida</h3>
-            <MarkdownTable markdown={result.summaryValueTable} />
-
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+                 <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                        table: MarkdownTable,
+                        thead: MarkdownTHead,
+                        tr: MarkdownTr,
+                        th: MarkdownTh,
+                        td: MarkdownTd,
+                    }}
+                 >
+                    {result.consolidatedAnalysis}
+                </ReactMarkdown>
+            </div>
             <div className="flex justify-start pt-4">
                 <Button variant="outline" onClick={handleReset}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Analizar otra Imagen
                 </Button>
             </div>
-        </div>
+        </CardContent>
     )
   }
 
@@ -170,7 +164,7 @@ export function ImageAnalysisUploader() {
         <p className="mb-2 text-sm text-muted-foreground">
           <span className="font-semibold text-primary">Haz clic para subir</span> o arrastra y suelta una imagen
         </p>
-        <p className="text-xs text-muted-foreground">PNG, JPG (MAX. 800x400px)</p>
+        <p className="text-xs text-muted-foreground">PNG, JPG</p>
       </div>
     </div>
   );
