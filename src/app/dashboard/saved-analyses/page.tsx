@@ -52,9 +52,12 @@ export default function SavedAnalysesPage() {
                     ...analysis,
                     createdAt: new Date(analysis.createdAt),
                 }));
-                setAnalyses(parsedAnalyses);
+                 // Sort by date descending
+                const sortedAnalyses = parsedAnalyses.sort((a: SavedAnalysis, b: SavedAnalysis) => b.createdAt.getTime() - a.createdAt.getTime());
+                setAnalyses(sortedAnalyses);
             }
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Error fetching analyses from localStorage:", error);
         } finally {
             setLoading(false);
@@ -118,7 +121,7 @@ export default function SavedAnalysesPage() {
                 <div className="mt-12">
                     <h3 className="text-xl font-semibold">No tienes análisis guardados</h3>
                     <p className="text-muted-foreground mt-2">
-                        Ve a la sección de 'Analizar Apuesta' para guardar tu primer análisis.
+                        Ve a la sección de 'Analizar' para guardar tu primer análisis.
                     </p>
                 </div>
             </div>

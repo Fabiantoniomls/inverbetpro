@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useCallback } from 'react';
@@ -92,12 +93,23 @@ export function ImageAnalysisUploader() {
                 setExtractedMatches(extractionResult.extractedMatches);
                 // Check if we can infer surface from tournament
                 const tournament = extractionResult.extractedMatches[0]?.tournament?.toLowerCase();
-                if (tournament) {
-                    if (tournament.includes('wimbledon')) setSurface('Grass');
-                    else if (['roland garros', 'french open', 'monte-carlo', 'madrid', 'rome'].some(t => tournament.includes(t))) setSurface('Clay');
-                    else if (['australian open', 'us open', 'cincinnati', 'miami', 'indian wells', 'shanghai', 'paris'].some(t => tournament.includes(t))) setSurface('Hard');
+                let inferredSurface: Surface | null = null;
+                if(extractionResult.extractedMatches.every(m => m.sport === 'Fútbol')) {
+                   inferredSurface = 'Football';
                 }
-                setStep('surface'); // Always go to surface step to allow override
+                else if (tournament) {
+                    if (tournament.includes('wimbledon')) inferredSurface = 'Grass';
+                    else if (['roland garros', 'french open', 'monte-carlo', 'madrid', 'rome'].some(t => tournament.includes(t))) inferredSurface = 'Clay';
+                    else if (['australian open', 'us open', 'cincinnati', 'miami', 'indian wells', 'shanghai', 'paris'].some(t => tournament.includes(t))) inferredSurface = 'Hard';
+                }
+                
+                if (inferredSurface) {
+                    setSurface(inferredSurface);
+                    handleAnalysis(dataUri, inferredSurface, extractionResult.extractedMatches);
+                } else {
+                    setStep('surface'); // Go to surface step to allow user selection
+                }
+
             } else {
                 toast({ variant: 'destructive', title: 'Extracción Fallida', description: 'No se encontraron partidos en la imagen.' });
                 handleReset();
@@ -118,8 +130,12 @@ export function ImageAnalysisUploader() {
     }
   }, [toast]);
 
-  const handleAnalysis = async () => {
-    if (!photoDataUri || !surface || !extractedMatches) {
+  const handleAnalysis = async (
+    pdu: string, 
+    sfc: Surface, 
+    matches: ExtractedMatch[]
+  ) => {
+    if (!pdu || !sfc || !matches) {
         toast({ variant: 'destructive', title: 'Faltan datos', description: 'Por favor, proporciona una imagen y selecciona una superficie.' });
         return;
     }
@@ -130,7 +146,7 @@ export function ImageAnalysisUploader() {
     setCounterResult(null);
 
     try {
-        const analysisResult = await analyzeBatchFromImage({ photoDataUri, surface, extractedMatches });
+        const analysisResult = await analyzeBatchFromImage({ photoDataUri: pdu, surface: sfc, extractedMatches: matches });
         setResult(analysisResult);
         setStep('result');
     } catch (error) {
@@ -191,12 +207,13 @@ export function ImageAnalysisUploader() {
     });
   }
 
-  const handleSaveAnalysis = async (analysisText: string) => {
+  const handleSaveAnalysis = async (analysisText: string, surface: string | null) => {
+    if (!analysisText) return;
     try {
         const titleMatch = analysisText.match(/Análisis Detallado de Apuestas de Valor - (.*?)\n/);
         const newAnalysis: SavedAnalysis = {
             id: new Date().toISOString(),
-            title: titleMatch ? titleMatch[1].trim() : "Análisis Guardado",
+            title: titleMatch ? titleMatch[1].trim() : `Análisis de ${surface || 'varios'}`,
             content: analysisText,
             createdAt: new Date(),
         };
@@ -211,7 +228,7 @@ export function ImageAnalysisUploader() {
             description: "Tu análisis ha sido guardado.",
             action: (
               <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/saved-analyses')}>
-                Ver Análisis Guardados
+                Ver Análisis
               </Button>
             ),
         });
@@ -251,7 +268,7 @@ export function ImageAnalysisUploader() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Analizar otra Imagen
         </Button>
-        <Button variant="outline" onClick={() => handleSaveAnalysis(analysisText)}>
+        <Button variant="outline" onClick={() => handleSaveAnalysis(analysisText, surface)}>
             <Save className="mr-2 h-4 w-4" />
             Guardar Análisis
         </Button>
@@ -310,7 +327,7 @@ export function ImageAnalysisUploader() {
                         <Sparkles className="h-4 w-4" />
                         <AlertTitle>¡Casi listo! Un último paso.</AlertTitle>
                         <AlertDescription>
-                           Para garantizar la máxima precisión, confirma o selecciona la superficie en la que se juegan los partidos. Este factor es **crítico** para el análisis.
+                           No pudimos determinar la superficie con certeza. Para garantizar la máxima precisión, por favor, selecciónala manualmente.
                         </AlertDescription>
                     </Alert>
                     <div className="space-y-2">
@@ -334,7 +351,7 @@ export function ImageAnalysisUploader() {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Cancelar
                 </Button>
-                <Button onClick={handleAnalysis} disabled={!surface || isLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <Button onClick={() => handleAnalysis(photoDataUri!, surface!, extractedMatches!)} disabled={!surface || isLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Confirmar y Analizar'}
                 </Button>
             </div>
