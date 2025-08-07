@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { AlertCircle, ArrowLeft, CheckCircle, Copy, ImageUp, Loader2, Bot } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, Copy, ImageUp, Loader2, Bot, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -11,9 +11,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
-import type { AnalyzeBatchFromImageOutput } from '@/lib/types/analysis';
+import type { AnalyzeBatchFromImageOutput, ExtractedMatch } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Label } from '../ui/label';
 
 // Custom renderer for tables to add ShadCN styling
 function MarkdownTable({ children }: { children: React.ReactNode }) {
@@ -48,66 +50,86 @@ const markdownComponents = {
     td: MarkdownTd,
 };
 
+type AnalysisStep = 'upload' | 'surface' | 'loading' | 'result';
+type Surface = 'Hard' | 'Clay' | 'Grass' | 'Football';
+
 
 export function ImageAnalysisUploader() {
+  const [step, setStep] = useState<AnalysisStep>('upload');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
+  const [surface, setSurface] = useState<Surface | null>(null);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isCounterAnalyzing, setIsCounterAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyzeBatchFromImageOutput | null>(null);
   const [counterResult, setCounterResult] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleAnalysis = async (file: File) => {
-    setIsLoading(true);
-    setResult(null);
-    setCounterResult(null);
+  const handleFileDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      const file = acceptedFiles[0];
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-        const photoDataUri = reader.result as string;
-        try {
-            const analysisResult = await analyzeBatchFromImage({ photoDataUri });
-            setResult(analysisResult);
-        } catch (error) {
-            console.error('Error during image analysis:', error);
-            toast({
-                variant: 'destructive',
-                title: 'Error en el Análisis',
-                description: 'No se pudo procesar la imagen. Por favor, inténtalo de nuevo.',
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    reader.onerror = (error) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        setPhotoDataUri(reader.result as string);
+        setStep('surface');
+      };
+      reader.onerror = (error) => {
         console.error('Error reading file:', error);
         toast({
             variant: 'destructive',
             title: 'Error de Archivo',
             description: 'No se pudo leer el archivo de imagen.',
         });
+        handleReset();
+      };
+    }
+  }, [toast]);
+
+  const handleAnalysis = async () => {
+    if (!photoDataUri || !surface) {
+        toast({ variant: 'destructive', title: 'Faltan datos', description: 'Por favor, proporciona una imagen y selecciona una superficie.' });
+        return;
+    }
+    
+    setStep('loading');
+    setIsLoading(true);
+    setResult(null);
+    setCounterResult(null);
+
+    try {
+        const analysisResult = await analyzeBatchFromImage({ photoDataUri, surface });
+        setResult(analysisResult);
+        setStep('result');
+    } catch (error) {
+        console.error('Error during image analysis:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error en el Análisis',
+            description: 'No se pudo procesar la imagen. Por favor, inténtalo de nuevo.',
+        });
+        handleReset();
+    } finally {
         setIsLoading(false);
-    };
+    }
   };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-      handleAnalysis(file);
-    }
-  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
-    onDrop,
+    onDrop: handleFileDrop,
     accept: { 'image/*': ['.jpeg', '.jpg', '.png'] },
     multiple: false 
   });
 
   const handleReset = () => {
+    setStep('upload');
     setImagePreview(null);
+    setPhotoDataUri(null);
+    setSurface(null);
     setResult(null);
     setCounterResult(null);
     setIsLoading(false);
@@ -140,7 +162,8 @@ export function ImageAnalysisUploader() {
     });
   }
 
-  if (isLoading) {
+
+  if (step === 'loading' || isLoading) {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-center gap-4 text-primary">
@@ -159,14 +182,56 @@ export function ImageAnalysisUploader() {
     )
   }
 
-  if (result) {
+  if (step === 'surface') {
+    return (
+        <CardContent className="space-y-6">
+            <div className='flex flex-col md:flex-row gap-6 items-center'>
+                {imagePreview && <img src={imagePreview} alt="Preview" className="w-full md:w-1/3 rounded-lg" />}
+                <div className="w-full md:w-2/3 space-y-4">
+                    <Alert>
+                        <Sparkles className="h-4 w-4" />
+                        <AlertTitle>¡Casi listo! Un último paso.</AlertTitle>
+                        <AlertDescription>
+                           Para garantizar la máxima precisión, selecciona la superficie en la que se juegan los partidos. Este factor es **crítico** para el análisis.
+                        </AlertDescription>
+                    </Alert>
+                    <div className="space-y-2">
+                        <Label htmlFor="surface">Superficie de Juego</Label>
+                        <Select name="surface" onValueChange={(value) => setSurface(value as Surface)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una superficie..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Hard">Pista Dura (Hard)</SelectItem>
+                                <SelectItem value="Clay">Arcilla (Clay)</SelectItem>
+                                <SelectItem value="Grass">Hierba (Grass)</SelectItem>
+                                <SelectItem value="Football">Fútbol (No aplica)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </div>
+            <div className="flex justify-between pt-4">
+                <Button variant="outline" onClick={handleReset}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Cancelar
+                </Button>
+                <Button onClick={handleAnalysis} disabled={!surface || isLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Confirmar y Analizar'}
+                </Button>
+            </div>
+        </CardContent>
+    )
+  }
+
+  if (step === 'result' && result) {
     return (
         <CardContent className="space-y-6">
              <Alert variant="default" className="border-green-500 bg-green-500/10">
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <AlertTitle>Análisis Completado por Inverapuestas Pro</AlertTitle>
                 <AlertDescription>
-                    Se ha generado tu informe de valor. ¡Revisa las mejores oportunidades!
+                    Se ha generado tu informe de valor para la superficie: **{surface}**.
                 </AlertDescription>
             </Alert>
             <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -178,7 +243,7 @@ export function ImageAnalysisUploader() {
                 </ReactMarkdown>
             </div>
 
-            <div className="flex justify-start pt-4 gap-2">
+            <div className="flex justify-start pt-4 gap-2 flex-wrap">
                 <Button variant="outline" onClick={handleReset}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Analizar otra Imagen
