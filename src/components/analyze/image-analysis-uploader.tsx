@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { AlertCircle, ArrowLeft, CheckCircle, ImageUp, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, Copy, ImageUp, Loader2, Bot } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
+import { counterAnalysis } from '@/ai/flows/counter-analysis';
 import type { AnalyzeBatchFromImageOutput } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '../ui/card';
@@ -39,15 +40,27 @@ function MarkdownTd({ children }: { children: React.ReactNode }) {
     return <td className="px-4 py-3 whitespace-nowrap text-sm">{children}</td>;
 }
 
+const markdownComponents = {
+    table: MarkdownTable,
+    thead: MarkdownTHead,
+    tr: MarkdownTr,
+    th: MarkdownTh,
+    td: MarkdownTd,
+};
+
+
 export function ImageAnalysisUploader() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCounterAnalyzing, setIsCounterAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyzeBatchFromImageOutput | null>(null);
+  const [counterResult, setCounterResult] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleAnalysis = async (file: File) => {
     setIsLoading(true);
     setResult(null);
+    setCounterResult(null);
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -96,7 +109,35 @@ export function ImageAnalysisUploader() {
   const handleReset = () => {
     setImagePreview(null);
     setResult(null);
+    setCounterResult(null);
     setIsLoading(false);
+    setIsCounterAnalyzing(false);
+  }
+
+  const handleCounterAnalysis = async () => {
+    if (!result?.consolidatedAnalysis) return;
+    setIsCounterAnalyzing(true);
+    try {
+        const { counterAnalysis: newCounterResult } = await counterAnalysis({ originalAnalysis: result.consolidatedAnalysis });
+        setCounterResult(newCounterResult);
+    } catch (error) {
+        console.error('Error during counter-analysis:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error en Contra-Análisis',
+            description: 'No se pudo obtener la segunda opinión.',
+        });
+    } finally {
+        setIsCounterAnalyzing(false);
+    }
+  }
+
+  const handleCopyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+        title: "Copiado",
+        description: "Análisis copiado al portapapeles.",
+    });
   }
 
   if (isLoading) {
@@ -123,7 +164,7 @@ export function ImageAnalysisUploader() {
         <CardContent className="space-y-6">
              <Alert variant="default" className="border-green-500 bg-green-500/10">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <AlertTitle>Análisis Completado</AlertTitle>
+                <AlertTitle>Análisis Completado por Inverapuestas Pro</AlertTitle>
                 <AlertDescription>
                     Se ha generado tu informe de valor. ¡Revisa las mejores oportunidades!
                 </AlertDescription>
@@ -131,23 +172,62 @@ export function ImageAnalysisUploader() {
             <div className="prose prose-sm dark:prose-invert max-w-none">
                  <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
-                    components={{
-                        table: MarkdownTable,
-                        thead: MarkdownTHead,
-                        tr: MarkdownTr,
-                        th: MarkdownTh,
-                        td: MarkdownTd,
-                    }}
+                    components={markdownComponents}
                  >
                     {result.consolidatedAnalysis}
                 </ReactMarkdown>
             </div>
-            <div className="flex justify-start pt-4">
+
+            <div className="flex justify-start pt-4 gap-2">
                 <Button variant="outline" onClick={handleReset}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Analizar otra Imagen
                 </Button>
+                <Button variant="outline" onClick={() => handleCopyToClipboard(result.consolidatedAnalysis)}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copiar Análisis
+                </Button>
+                {!counterResult && (
+                    <Button onClick={handleCounterAnalysis} disabled={isCounterAnalyzing} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                        {isCounterAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                        Obtener Segunda Opinión (iaedge)
+                    </Button>
+                )}
             </div>
+
+            {isCounterAnalyzing && (
+                 <div className="space-y-6 pt-6">
+                    <div className="flex items-center justify-center gap-4 text-primary">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                        <p className="text-lg font-medium">"iaedge" está contrastando el análisis...</p>
+                    </div>
+                    <Skeleton className="h-48 w-full" />
+                </div>
+            )}
+
+            {counterResult && (
+                <div className="space-y-6 pt-6 border-t mt-6">
+                     <Alert variant="default" className="border-blue-500 bg-blue-500/10">
+                        <Bot className="h-4 w-4 text-blue-500" />
+                        <AlertTitle>Contra-Análisis por iaedge</AlertTitle>
+                        <AlertDescription>
+                            Aquí tienes una segunda opinión para un análisis más robusto.
+                        </AlertDescription>
+                    </Alert>
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                            {counterResult}
+                        </ReactMarkdown>
+                    </div>
+                    <div className="flex justify-start pt-4 gap-2">
+                        <Button variant="outline" onClick={() => handleCopyToClipboard(counterResult)}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copiar Contra-Análisis
+                        </Button>
+                    </div>
+                </div>
+            )}
+
         </CardContent>
     )
   }
