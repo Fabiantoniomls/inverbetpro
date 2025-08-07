@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FundamentalAnalysisForm } from "@/components/analyze/fundamental-analysis-form"
 import { QuantitativeAnalysisForm } from "@/components/analyze/quantitative-analysis-form"
 import { ImageAnalysisUploader } from "@/components/analyze/image-analysis-uploader"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BrainCircuit, Calculator, Image as ImageIcon } from "lucide-react"
 
 export default function AnalyzePage() {
