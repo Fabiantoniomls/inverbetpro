@@ -13,6 +13,10 @@ interface AnalysisResultProps {
     valueTable: string;
     odds: number;
     estimatedProbability: number;
+    match: string;
+    market: string;
+    selection: string;
+    sport: 'Fútbol' | 'Tenis';
   };
   onReset: () => void;
 }
@@ -50,7 +54,11 @@ export function AnalysisResult({ result, onReset }: AnalysisResultProps) {
 
   const stakeData = {
     probability: result.estimatedProbability,
-    odds: result.odds
+    odds: result.odds,
+    match: result.match,
+    market: result.market,
+    selection: result.selection,
+    sport: result.sport
   }
 
   if (showStakeCalculator) {

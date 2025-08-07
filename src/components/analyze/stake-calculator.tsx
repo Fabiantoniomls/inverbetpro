@@ -8,6 +8,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { stakingCalculator, StakingCalculatorInput } from '@/ai/flows/staking-calculator';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import type { Bet } from '@/lib/types';
+
 
 // Placeholder user data. In a real app, this would be fetched for the logged-in user.
 const userData = {
@@ -18,7 +20,32 @@ const userData = {
     percentageStakeAmount: 2 // Only if preferredStakingModel is 'Porcentual'
 } as const;
 
-export function StakeCalculator({ stakeData, onBack }: { stakeData: { probability: number; odds: number; }, onBack: () => void }) {
+
+// In a real app, this would be a server action to save the bet to Firestore.
+// For now, we'll use localStorage to persist bets on the client side.
+const saveBetToHistory = async (bet: Omit<Bet, 'id' | 'userId'>): Promise<Bet> => {
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network latency
+    const newBet: Bet = {
+        ...bet,
+        id: `${new Date().getTime()}-${bet.match.slice(0, 10)}`, // Simple unique ID
+        userId: 'localUser', // Placeholder user ID
+    };
+
+    try {
+        const storedBets = localStorage.getItem('betHistory');
+        const history: Bet[] = storedBets ? JSON.parse(storedBets) : [];
+        history.unshift(newBet); // Add to the beginning
+        localStorage.setItem('betHistory', JSON.stringify(history));
+    } catch (error) {
+        console.error("Failed to save bet to localStorage:", error);
+        throw new Error("Could not save bet.");
+    }
+    
+    return newBet;
+};
+
+
+export function StakeCalculator({ stakeData, onBack }: { stakeData: { probability: number; odds: number; match: string, market: string; selection: string, sport: 'Fútbol' | 'Tenis' }, onBack: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [stake, setStake] = useState<number | null>(null);
   const [isBetRegistered, setIsBetRegistered] = useState(false);
@@ -52,11 +79,24 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
   }
 
   const handleRegisterBet = async () => {
+      if (stake === null) return;
       setIsLoading(true);
       try {
-        // In a real app, this would be a server action to save the bet to Firestore.
-        // The action would take details like match, market, odds, stake, status, etc.
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const betToSave: Omit<Bet, 'id' | 'userId'> = {
+            sport: stakeData.sport,
+            match: stakeData.match,
+            market: stakeData.market,
+            selection: stakeData.selection,
+            odds: stakeData.odds,
+            stake: stake,
+            status: 'Pendiente',
+            valueCalculated: (stakeData.probability * stakeData.odds) - 1,
+            estimatedProbability: stakeData.probability * 100,
+            profitOrLoss: 0,
+            createdAt: new Date(),
+        };
+
+        await saveBetToHistory(betToSave);
         
         setIsBetRegistered(true);
         toast({

@@ -71,7 +71,14 @@ export const columns: ColumnDef<Bet>[] = [
   {
     accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
-    cell: ({ row }) => format(row.original.createdAt.toDate(), 'dd/MM/yyyy HH:mm'),
+    cell: ({ row }) => {
+        const date = row.original.createdAt;
+        // Check if date is a valid Date object before formatting
+        if (date instanceof Date && !isNaN(date.getTime())) {
+            return format(date, 'dd/MM/yyyy HH:mm');
+        }
+        return "Fecha inválida";
+    },
   },
   {
     id: "actions",

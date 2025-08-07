@@ -57,6 +57,9 @@ Tu tarea es analizar el siguiente texto de análisis, identificar sus puntos fue
 \`\`\`
 
 Ahora, genera el contra-análisis completo como "iaedge", siguiendo la estructura y el tono del ejemplo proporcionado. Asegúrate de incluir la tabla de valor corregida y correctamente ordenada si es necesario.`,
+    config: {
+      temperature: 0.2
+    }
 });
 
 

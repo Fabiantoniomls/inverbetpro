@@ -59,7 +59,10 @@ Ejemplo de Salida JSON Esperada:
   }
 ]
 
-Photo: {{media url=photoDataUri}}`
+Photo: {{media url=photoDataUri}}`,
+    config: {
+      temperature: 0.2
+    }
 });
 
 const consolidatedAnalysisPrompt = ai.definePrompt({
@@ -100,7 +103,10 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
   {{{matchesJson}}}
 
   Adopta un tono profesional pero accesible. ¡Demuestra por qué entender el contexto (especialmente la superficie en tenis) lo es todo!
-  `
+  `,
+    config: {
+      temperature: 0.2
+    }
 });
 
 

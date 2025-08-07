@@ -35,6 +35,11 @@ export function QuantitativeAnalysisForm() {
         valueTable: analysisResult.valueTable,
         odds: isFinite(odds) ? odds : 2.0,
         estimatedProbability: homeWinProb,
+        // Pass necessary info for saving the bet
+        match: `Análisis Cuantitativo de ${url.substring(0, 50)}...`,
+        market: "Análisis de Modelo",
+        selection: "Victoria Local (Estimada)",
+        sport: modelType === 'Poisson-xG' ? 'Fútbol' : 'Tenis'
       });
 
     } catch (error) {

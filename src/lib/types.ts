@@ -1,5 +1,3 @@
-import type { Timestamp } from "firebase/firestore";
-
 export interface UserProfile {
   uid: string;
   email: string;
@@ -7,11 +5,11 @@ export interface UserProfile {
   initialBankroll: number;
   currentBankroll: number;
   preferredStakingModel: 'Fijo' | 'Porcentual' | 'Kelly Fraccionario';
-  createdAt: Timestamp;
+  createdAt: Date;
 }
 
 export interface Bet {
-  id: string; // Document ID from Firestore
+  id: string; // Will be a unique ID, e.g., timestamp + match
   userId: string;
   sport: 'Fútbol' | 'Tenis';
   match: string;
@@ -23,5 +21,5 @@ export interface Bet {
   valueCalculated: number;
   estimatedProbability: number;
   profitOrLoss: number;
-  createdAt: Timestamp;
+  createdAt: Date;
 }

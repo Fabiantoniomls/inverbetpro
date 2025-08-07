@@ -63,6 +63,11 @@ export function FundamentalAnalysisForm() {
         ...analysisResult,
         odds: analysisInput.odds,
         estimatedProbability: estimatedProbability || 0.5,
+        // Pass necessary info for saving the bet
+        match: formData.matchDescription,
+        market: "Resultado del Partido", // Assuming this, as it's not in the form
+        selection: formData.keyPlayerTeamA, // Placeholder, needs better logic
+        sport: 'Fútbol' // Assuming football for this form
       })
     } catch (error) {
       console.error("Error running fundamental analysis: ", error);

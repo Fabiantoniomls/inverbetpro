@@ -1,22 +1,59 @@
+"use client"
+
+import { useEffect, useState } from 'react'
 import { DataTable } from '@/components/history/data-table'
 import { columns } from '@/components/history/columns'
 import type { Bet } from '@/lib/types'
-import { Timestamp } from 'firebase/firestore'
+import { Skeleton } from '@/components/ui/skeleton'
 
-// Placeholder data, to be fetched from a Genkit flow that connects to Firestore
+// In a real app, this would be a Genkit flow that connects to Firestore
 async function getBets(): Promise<Bet[]> {
-  const now = new Date();
-  return [
-    { id: '1', userId: 'abc', sport: 'Fútbol', match: 'Real Madrid vs FC Barcelona', market: 'Resultado del partido', selection: 'Real Madrid', odds: 2.20, stake: 25, status: 'Ganada', valueCalculated: 0.12, estimatedProbability: 55, profitOrLoss: 30.00, createdAt: Timestamp.fromDate(new Date(now.setDate(now.getDate() - 2))) },
-    { id: '2', userId: 'abc', sport: 'Tenis', match: 'Carlos Alcaraz vs Jannik Sinner', market: 'Ganador', selection: 'Carlos Alcaraz', odds: 1.85, stake: 50, status: 'Ganada', valueCalculated: 0.08, estimatedProbability: 60, profitOrLoss: 42.50, createdAt: Timestamp.fromDate(new Date(now.setDate(now.getDate() - 5))) },
-    { id: '3', userId: 'abc', sport: 'Fútbol', match: 'Liverpool vs Manchester City', market: 'Más de 2.5 Goles', selection: 'Más de 2.5 Goles', odds: 1.72, stake: 20, status: 'Perdida', valueCalculated: 0.05, estimatedProbability: 62, profitOrLoss: -20.00, createdAt: Timestamp.fromDate(new Date(now.setDate(now.getDate() - 7))) },
-    { id: '4', userId: 'abc', sport: 'Fútbol', match: 'Bayern Munich vs Borussia Dortmund', market: 'Resultado del partido', selection: 'Borussia Dortmund', odds: 4.50, stake: 10, status: 'Pendiente', valueCalculated: -0.02, estimatedProbability: 20, profitOrLoss: 0, createdAt: Timestamp.fromDate(new Date(now.setDate(now.getDate() - 1))) },
-    { id: '5', userId: 'abc', sport: 'Tenis', match: 'Iga Swiatek vs Aryna Sabalenka', market: 'Ganador', selection: 'Aryna Sabalenka', odds: 2.50, stake: 15, status: 'Pendiente', valueCalculated: 0.1, estimatedProbability: 44, profitOrLoss: 0, createdAt: Timestamp.now() },
-  ].sort((a, b) => b.createdAt.toMillis() - a.createdAt.toMillis());
+  try {
+    const storedBets = localStorage.getItem('betHistory');
+    if (storedBets) {
+      const parsedBets = JSON.parse(storedBets).map((bet: any) => ({
+        ...bet,
+        createdAt: new Date(bet.createdAt), // Re-hydrate date object
+      }));
+      // Sort by date descending
+      return parsedBets.sort((a: Bet, b: Bet) => b.createdAt.getTime() - a.createdAt.getTime());
+    }
+  } catch (error) {
+    console.error("Error fetching bets from localStorage:", error);
+  }
+  return [];
 }
 
-export default async function HistoryPage() {
-  const data = await getBets()
+
+export default function HistoryPage() {
+  const [data, setData] = useState<Bet[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadBets = async () => {
+      setLoading(true);
+      const bets = await getBets();
+      setData(bets);
+      setLoading(false);
+    };
+    loadBets();
+  }, []);
+
+  if (loading) {
+     return (
+      <div className="space-y-8">
+        <h1 className="text-3xl font-bold tracking-tight">Historial de Apuestas</h1>
+        <p className="text-muted-foreground">
+          Aquí puedes ver, filtrar y gestionar todas tus apuestas guardadas.
+        </p>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-8">
