@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const ExtractedMatchSchema = z.object({
     sport: z.enum(['Fútbol', 'Tenis']),
     participants: z.string().describe('Names of the teams or players.'),
-    odds: z.record(z.string(), z.number()).describe('A record of outcomes and their decimal odds.'),
+    odds: z.record(z.number()).describe('A record of outcomes and their decimal odds. For example: { "local": 1.5, "visitor": 2.5 }'),
   });
 export type ExtractedMatch = z.infer<typeof ExtractedMatchSchema>;
   
