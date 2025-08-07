@@ -50,7 +50,7 @@ const markdownComponents = {
     td: MarkdownTd,
 };
 
-type AnalysisStep = 'upload' | 'surface' | 'loading' | 'result';
+type AnalysisStep = 'upload' | 'extracting' | 'surface' | 'analyzing' | 'result';
 type Surface = 'Hard' | 'Clay' | 'Grass' | 'Football';
 
 
@@ -58,6 +58,7 @@ export function ImageAnalysisUploader() {
   const [step, setStep] = useState<AnalysisStep>('upload');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
+  const [extractedMatches, setExtractedMatches] = useState<ExtractedMatch[] | null>(null);
   const [surface, setSurface] = useState<Surface | null>(null);
   
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +67,7 @@ export function ImageAnalysisUploader() {
   const [counterResult, setCounterResult] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleFileDrop = useCallback((acceptedFiles: File[]) => {
+  const handleFileDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       const file = acceptedFiles[0];
       const previewUrl = URL.createObjectURL(file);
@@ -74,35 +75,58 @@ export function ImageAnalysisUploader() {
 
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => {
-        setPhotoDataUri(reader.result as string);
-        setStep('surface');
+      reader.onload = async () => {
+        const dataUri = reader.result as string;
+        setPhotoDataUri(dataUri);
+        setStep('extracting');
+        setIsLoading(true);
+
+        try {
+            // First, just extract the matches without analysis
+            const extractionResult = await analyzeBatchFromImage({ photoDataUri: dataUri });
+            if (extractionResult.extractedMatches && extractionResult.extractedMatches.length > 0) {
+                setExtractedMatches(extractionResult.extractedMatches);
+                // Check if we can infer surface from tournament
+                const tournament = extractionResult.extractedMatches[0]?.tournament?.toLowerCase();
+                if (tournament) {
+                    if (tournament.includes('wimbledon')) setSurface('Grass');
+                    else if (['roland garros', 'french open', 'monte-carlo', 'madrid', 'rome'].some(t => tournament.includes(t))) setSurface('Clay');
+                    else if (['australian open', 'us open', 'cincinnati', 'miami', 'indian wells', 'shanghai', 'paris'].some(t => tournament.includes(t))) setSurface('Hard');
+                }
+                setStep('surface'); // Always go to surface step to allow override
+            } else {
+                toast({ variant: 'destructive', title: 'Extracción Fallida', description: 'No se encontraron partidos en la imagen.' });
+                handleReset();
+            }
+        } catch (error) {
+            console.error('Error during extraction:', error);
+            toast({ variant: 'destructive', title: 'Error de Extracción', description: 'No se pudo procesar la imagen.' });
+            handleReset();
+        } finally {
+            setIsLoading(false);
+        }
       };
       reader.onerror = (error) => {
         console.error('Error reading file:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Error de Archivo',
-            description: 'No se pudo leer el archivo de imagen.',
-        });
+        toast({ variant: 'destructive', title: 'Error de Archivo', description: 'No se pudo leer el archivo de imagen.' });
         handleReset();
       };
     }
   }, [toast]);
 
   const handleAnalysis = async () => {
-    if (!photoDataUri || !surface) {
+    if (!photoDataUri || !surface || !extractedMatches) {
         toast({ variant: 'destructive', title: 'Faltan datos', description: 'Por favor, proporciona una imagen y selecciona una superficie.' });
         return;
     }
     
-    setStep('loading');
+    setStep('analyzing');
     setIsLoading(true);
     setResult(null);
     setCounterResult(null);
 
     try {
-        const analysisResult = await analyzeBatchFromImage({ photoDataUri, surface });
+        const analysisResult = await analyzeBatchFromImage({ photoDataUri, surface, extractedMatches });
         setResult(analysisResult);
         setStep('result');
     } catch (error) {
@@ -130,6 +154,7 @@ export function ImageAnalysisUploader() {
     setImagePreview(null);
     setPhotoDataUri(null);
     setSurface(null);
+    setExtractedMatches(null);
     setResult(null);
     setCounterResult(null);
     setIsLoading(false);
@@ -162,22 +187,29 @@ export function ImageAnalysisUploader() {
     });
   }
 
-
-  if (step === 'loading' || isLoading) {
+  if (step === 'extracting') {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-center gap-4 text-primary">
                 <Loader2 className="h-6 w-6 animate-spin" />
-                <p className="text-lg font-medium">Analizando partidos en la imagen...</p>
+                <p className="text-lg font-medium">Extrayendo partidos de la imagen...</p>
             </div>
-            <div className="space-y-2">
+            {imagePreview && <img src={imagePreview} alt="Preview" className="w-full md:w-1/2 mx-auto rounded-lg opacity-50" />}
+        </div>
+    )
+  }
+  
+  if (step === 'analyzing') {
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-center gap-4 text-primary">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <p className="text-lg font-medium">Analizando partidos con superficie: {surface}...</p>
+            </div>
+             <div className="space-y-2">
                 <Skeleton className="h-8 w-3/4" />
                 <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-8 w-3/4" />
-                <Skeleton className="h-24 w-full" />
             </div>
-            <h3 className="text-lg font-semibold pt-4">Tabla de Valor Resumida</h3>
-            <Skeleton className="h-48 w-full" />
         </div>
     )
   }
@@ -192,12 +224,12 @@ export function ImageAnalysisUploader() {
                         <Sparkles className="h-4 w-4" />
                         <AlertTitle>¡Casi listo! Un último paso.</AlertTitle>
                         <AlertDescription>
-                           Para garantizar la máxima precisión, selecciona la superficie en la que se juegan los partidos. Este factor es **crítico** para el análisis.
+                           Para garantizar la máxima precisión, confirma o selecciona la superficie en la que se juegan los partidos. Este factor es **crítico** para el análisis.
                         </AlertDescription>
                     </Alert>
                     <div className="space-y-2">
                         <Label htmlFor="surface">Superficie de Juego</Label>
-                        <Select name="surface" onValueChange={(value) => setSurface(value as Surface)}>
+                        <Select name="surface" defaultValue={surface || undefined} onValueChange={(value) => setSurface(value as Surface)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecciona una superficie..." />
                             </SelectTrigger>

@@ -27,7 +27,7 @@ export async function analyzeBatchFromImage(input: AnalyzeBatchFromImageInput): 
 
 const extractMatchesPrompt = ai.definePrompt({
     name: 'extractMatchesFromImagePrompt',
-    input: { schema: AnalyzeBatchFromImageInputSchema },
+    input: { schema: z.object({ photoDataUri: z.string() }) },
     output: { schema: z.object({ matches: z.array(ExtractedMatchSchema) }) },
     prompt: `Actúa como un experto en extracción de datos. Analiza meticulosamente la siguiente imagen de una casa de apuestas. Identifica cada partido de fútbol o tenis listado, y si es visible, el nombre del torneo (ej. "Cincinnati Open"). Para cada partido, extrae de forma estructurada los nombres de los participantes y las cuotas decimales para cada resultado principal. Ignora cualquier otra información. Devuelve los datos como un array de objetos JSON.
 
@@ -92,19 +92,28 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
     outputSchema: AnalyzeBatchFromImageOutputSchema,
   },
   async (input) => {
-    // In this simplified flow, we will extract first and then do analysis in a separate call.
-    // A more advanced implementation might stream results.
-    
-    const { output: extractedData } = await extractMatchesPrompt({ photoDataUri: input.photoDataUri });
-
-    if (!extractedData?.matches || extractedData.matches.length === 0) {
-      throw new Error("No se pudo extraer ningún partido de la imagen.");
+    // If the 'surface' is not provided, it means we are in the extraction step.
+    if (!input.surface) {
+      const { output: extractedData } = await extractMatchesPrompt({ photoDataUri: input.photoDataUri });
+      if (!extractedData?.matches || extractedData.matches.length === 0) {
+        throw new Error("No se pudo extraer ningún partido de la imagen.");
+      }
+      // Return only the extracted matches to the frontend for surface confirmation.
+      return {
+        extractedMatches: extractedData.matches,
+        consolidatedAnalysis: '', // Empty analysis
+      };
     }
-    
-    // The consolidation prompt now receives the surface and does the full analysis.
+
+    // If 'surface' IS provided, it means the user has confirmed it, and we proceed with analysis.
+    // The matches must be passed in the input from the frontend.
+    if (!input.extractedMatches) {
+        throw new Error("Los datos de los partidos extraídos son necesarios para el análisis.");
+    }
+
     const analysisInput = { 
-        matchesJson: JSON.stringify(extractedData.matches, null, 2),
-        surface: input.surface || 'Unknown' // Pass the surface to the prompt
+        matchesJson: JSON.stringify(input.extractedMatches, null, 2),
+        surface: input.surface
     };
 
     const analysisResult = await consolidatedAnalysisPrompt(analysisInput);
@@ -113,9 +122,10 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
       throw new Error("No se pudo generar el análisis consolidado.");
     }
 
+    // Return the final analysis, along with the matches for context.
     return {
         ...analysisResult.output,
-        extractedMatches: extractedData.matches, // Pass extracted matches back to UI
+        extractedMatches: input.extractedMatches, 
     };
   }
 );
