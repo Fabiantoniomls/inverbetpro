@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { AlertCircle, ArrowLeft, CheckCircle, Copy, ImageUp, Loader2, Bot, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowLeft, CheckCircle, Copy, ImageUp, Loader2, Bot, Sparkles, Save, Share2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -187,6 +187,63 @@ export function ImageAnalysisUploader() {
     });
   }
 
+  const handleSaveAnalysis = (analysis: string) => {
+    // Placeholder for saving functionality. In a real app, this would call a flow to save to Firestore.
+    console.log("Saving analysis:", analysis);
+    toast({
+        title: "Análisis Guardado",
+        description: "Tu análisis ha sido guardado en el historial.",
+    });
+  };
+
+  const handleShareAnalysis = async (text: string) => {
+      if (navigator.share) {
+          try {
+              await navigator.share({
+                  title: 'Análisis de Inverapuestas Pro',
+                  text: text,
+              });
+              toast({ title: "Éxito", description: "Análisis compartido."});
+          } catch (error) {
+              console.error('Error al compartir:', error);
+              toast({ variant: 'destructive', title: "Error", description: "No se pudo compartir el análisis."});
+          }
+      } else {
+          // Fallback for browsers that don't support Web Share API
+          handleCopyToClipboard(text);
+          toast({ title: "Copiado", description: "El análisis se copió al portapapeles para que puedas compartirlo."});
+      }
+  };
+
+
+  const ActionButtons = ({ analysisText, isTop = false }: { analysisText: string, isTop?: boolean }) => (
+    <div className={`flex justify-start pt-4 gap-2 flex-wrap ${isTop ? 'pb-4' : ''}`}>
+        <Button variant="outline" onClick={handleReset}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Analizar otra Imagen
+        </Button>
+        <Button variant="outline" onClick={() => handleSaveAnalysis(analysisText)}>
+            <Save className="mr-2 h-4 w-4" />
+            Guardar Análisis
+        </Button>
+        <Button variant="outline" onClick={() => handleCopyToClipboard(analysisText)}>
+            <Copy className="mr-2 h-4 w-4" />
+            Copiar
+        </Button>
+        <Button variant="outline" onClick={() => handleShareAnalysis(analysisText)}>
+            <Share2 className="mr-2 h-4 w-4" />
+            Compartir
+        </Button>
+        {!counterResult && (
+            <Button onClick={handleCounterAnalysis} disabled={isCounterAnalyzing} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                {isCounterAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                Obtener Segunda Opinión (iaedge)
+            </Button>
+        )}
+    </div>
+);
+
+
   if (step === 'extracting') {
     return (
         <div className="space-y-6">
@@ -266,7 +323,10 @@ export function ImageAnalysisUploader() {
                     Se ha generado tu informe de valor para la superficie: **{surface}**.
                 </AlertDescription>
             </Alert>
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+
+            <ActionButtons analysisText={result.consolidatedAnalysis} isTop={true} />
+
+            <div className="prose prose-sm dark:prose-invert max-w-none border-t pt-4">
                  <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={markdownComponents}
@@ -275,23 +335,8 @@ export function ImageAnalysisUploader() {
                 </ReactMarkdown>
             </div>
 
-            <div className="flex justify-start pt-4 gap-2 flex-wrap">
-                <Button variant="outline" onClick={handleReset}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Analizar otra Imagen
-                </Button>
-                <Button variant="outline" onClick={() => handleCopyToClipboard(result.consolidatedAnalysis)}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copiar Análisis
-                </Button>
-                {!counterResult && (
-                    <Button onClick={handleCounterAnalysis} disabled={isCounterAnalyzing} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                        {isCounterAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                        Obtener Segunda Opinión (iaedge)
-                    </Button>
-                )}
-            </div>
-
+            <ActionButtons analysisText={result.consolidatedAnalysis} />
+            
             {isCounterAnalyzing && (
                  <div className="space-y-6 pt-6">
                     <div className="flex items-center justify-center gap-4 text-primary">
