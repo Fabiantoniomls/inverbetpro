@@ -11,11 +11,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
-import type { AnalyzeBatchFromImageOutput, ExtractedMatch } from '@/lib/types/analysis';
+import type { AnalyzeBatchFromImageOutput, ExtractedMatch, SavedAnalysis } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
+import { useRouter } from 'next/navigation';
+
 
 // Custom renderer for tables to add ShadCN styling
 function MarkdownTable({ children }: { children: React.ReactNode }) {
@@ -66,6 +68,8 @@ export function ImageAnalysisUploader() {
   const [result, setResult] = useState<AnalyzeBatchFromImageOutput | null>(null);
   const [counterResult, setCounterResult] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
+
 
   const handleFileDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -187,13 +191,38 @@ export function ImageAnalysisUploader() {
     });
   }
 
-  const handleSaveAnalysis = (analysis: string) => {
-    // Placeholder for saving functionality. In a real app, this would call a flow to save to Firestore.
-    console.log("Saving analysis:", analysis);
-    toast({
-        title: "Análisis Guardado",
-        description: "Tu análisis ha sido guardado en el historial.",
-    });
+  const handleSaveAnalysis = async (analysisText: string) => {
+    try {
+        const titleMatch = analysisText.match(/Análisis Detallado de Apuestas de Valor - (.*?)\n/);
+        const newAnalysis: SavedAnalysis = {
+            id: new Date().toISOString(),
+            title: titleMatch ? titleMatch[1].trim() : "Análisis Guardado",
+            content: analysisText,
+            createdAt: new Date(),
+        };
+
+        const storedAnalyses = localStorage.getItem('savedAnalyses');
+        const analyses: SavedAnalysis[] = storedAnalyses ? JSON.parse(storedAnalyses) : [];
+        analyses.unshift(newAnalysis);
+        localStorage.setItem('savedAnalyses', JSON.stringify(analyses));
+        
+        toast({
+            title: "Análisis Guardado",
+            description: "Tu análisis ha sido guardado.",
+            action: (
+              <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/saved-analyses')}>
+                Ver Análisis Guardados
+              </Button>
+            ),
+        });
+    } catch (error) {
+        console.error("Failed to save analysis to localStorage:", error);
+        toast({
+            variant: "destructive",
+            title: "Error al Guardar",
+            description: "No se pudo guardar el análisis."
+        });
+    }
   };
 
   const handleShareAnalysis = async (text: string) => {

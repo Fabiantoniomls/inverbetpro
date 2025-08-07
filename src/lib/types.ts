@@ -23,3 +23,10 @@ export interface Bet {
   profitOrLoss: number;
   createdAt: Date;
 }
+
+export interface SavedAnalysis {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: Date;
+}

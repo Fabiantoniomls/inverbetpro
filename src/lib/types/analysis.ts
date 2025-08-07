@@ -48,3 +48,10 @@ export const FundamentalAnalysisOutputSchema = z.object({
   valueTable: z.string().describe('Value table for the bet.'),
 });
 export type FundamentalAnalysisOutput = z.infer<typeof FundamentalAnalysisOutputSchema>;
+
+export interface SavedAnalysis {
+    id: string;
+    title: string;
+    content: string;
+    createdAt: Date;
+}
