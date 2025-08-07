@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useCallback } from 'react';
@@ -18,6 +17,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import { db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 
 // Custom renderer for tables to add ShadCN styling
@@ -70,6 +72,7 @@ export function ImageAnalysisUploader() {
   const [counterResult, setCounterResult] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
 
 
   const handleFileDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -185,7 +188,7 @@ export function ImageAnalysisUploader() {
     if (!result?.consolidatedAnalysis) return;
     setIsCounterAnalyzing(true);
     try {
-        const { counterAnalysis: newCounterResult } = await counterAnalysis({ originalAnalysis: result.consolidatedAnalysis });
+        const { counterAnalysis: newCounterResult } = await counterAnalysis({ originalAnalysis: result.consolidatedAnalysis, externalAnalysis: "Por favor, proporciona una segunda opinión crítica sobre este análisis." });
         setCounterResult(newCounterResult);
     } catch (error) {
         console.error('Error during counter-analysis:', error);
@@ -208,24 +211,26 @@ export function ImageAnalysisUploader() {
   }
 
   const handleSaveAnalysis = async (analysisText: string, surface: string | null) => {
-    if (!analysisText) return;
+    if (!analysisText || !user) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para guardar un análisis.' });
+        return;
+    }
     try {
         const titleMatch = analysisText.match(/Análisis Detallado de Apuestas de Valor - (.*?)\n/);
-        const newAnalysis: SavedAnalysis = {
-            id: new Date().toISOString(),
+        const newAnalysis: Omit<SavedAnalysis, 'id' | 'createdAt'> = {
+            userId: user.uid,
             title: titleMatch ? titleMatch[1].trim() : `Análisis de ${surface || 'varios'}`,
             content: analysisText,
-            createdAt: new Date(),
         };
 
-        const storedAnalyses = localStorage.getItem('savedAnalyses');
-        const analyses: SavedAnalysis[] = storedAnalyses ? JSON.parse(storedAnalyses) : [];
-        analyses.unshift(newAnalysis);
-        localStorage.setItem('savedAnalyses', JSON.stringify(analyses));
+        await addDoc(collection(db, 'savedAnalyses'), {
+            ...newAnalysis,
+            createdAt: serverTimestamp(),
+        });
         
         toast({
             title: "Análisis Guardado",
-            description: "Tu análisis ha sido guardado.",
+            description: "Tu análisis ha sido guardado en Firestore.",
             action: (
               <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/saved-analyses')}>
                 Ver Análisis
@@ -233,7 +238,7 @@ export function ImageAnalysisUploader() {
             ),
         });
     } catch (error) {
-        console.error("Failed to save analysis to localStorage:", error);
+        console.error("Failed to save analysis to Firestore:", error);
         toast({
             variant: "destructive",
             title: "Error al Guardar",

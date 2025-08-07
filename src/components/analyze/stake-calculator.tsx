@@ -9,9 +9,12 @@ import { stakingCalculator, StakingCalculatorInput } from '@/ai/flows/staking-ca
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import type { Bet } from '@/lib/types';
+import { useAuth } from '@/hooks/use-auth';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 
-// Placeholder user data. In a real app, this would be fetched for the logged-in user.
+// Placeholder user data. In a real app, this would be fetched for the logged-in user from firestore.
 const userData = {
     currentBankroll: 5000,
     preferredStakingModel: 'Kelly Fraccionario', // 'Fijo', 'Porcentual'
@@ -21,27 +24,17 @@ const userData = {
 } as const;
 
 
-// In a real app, this would be a server action to save the bet to Firestore.
-// For now, we'll use localStorage to persist bets on the client side.
-const saveBetToHistory = async (bet: Omit<Bet, 'id' | 'userId'>): Promise<Bet> => {
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network latency
-    const newBet: Bet = {
-        ...bet,
-        id: `${new Date().getTime()}-${bet.match.slice(0, 10)}`, // Simple unique ID
-        userId: 'localUser', // Placeholder user ID
-    };
-
+// Saves the bet to the 'bets' collection in Firestore
+const saveBetToHistory = async (bet: Omit<Bet, 'id' | 'createdAt'>): Promise<void> => {
     try {
-        const storedBets = localStorage.getItem('betHistory');
-        const history: Bet[] = storedBets ? JSON.parse(storedBets) : [];
-        history.unshift(newBet); // Add to the beginning
-        localStorage.setItem('betHistory', JSON.stringify(history));
+        await addDoc(collection(db, 'bets'), {
+            ...bet,
+            createdAt: serverTimestamp(),
+        });
     } catch (error) {
-        console.error("Failed to save bet to localStorage:", error);
+        console.error("Error writing bet to Firestore: ", error);
         throw new Error("Could not save bet.");
     }
-    
-    return newBet;
 };
 
 
@@ -51,6 +44,7 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
   const [isBetRegistered, setIsBetRegistered] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
 
   const handleCalculateStake = async () => {
     setIsLoading(true);
@@ -80,9 +74,17 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
 
   const handleRegisterBet = async () => {
       if (stake === null) return;
+      if (!user) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para guardar una apuesta.' });
+          return;
+      }
+
       setIsLoading(true);
       try {
-        const betToSave: Omit<Bet, 'id' | 'userId'> = {
+        // We omit 'id' because Firestore generates it automatically.
+        // We omit 'createdAt' because we use serverTimestamp().
+        const betToSave: Omit<Bet, 'id' | 'createdAt'> = {
+            userId: user.uid,
             sport: stakeData.sport,
             match: stakeData.match,
             market: stakeData.market,
@@ -93,7 +95,6 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
             valueCalculated: (stakeData.probability * stakeData.odds) - 1,
             estimatedProbability: stakeData.probability * 100,
             profitOrLoss: 0,
-            createdAt: new Date(),
         };
 
         await saveBetToHistory(betToSave);

@@ -9,7 +9,7 @@ export interface UserProfile {
 }
 
 export interface Bet {
-  id: string; // Will be a unique ID, e.g., timestamp + match
+  id: string; // Will be a unique ID, e.g., Firestore document ID
   userId: string;
   sport: 'Fútbol' | 'Tenis';
   match: string;
@@ -25,7 +25,8 @@ export interface Bet {
 }
 
 export interface SavedAnalysis {
-  id: string;
+  id: string; // Firestore document ID
+  userId: string;
   title: string;
   content: string;
   createdAt: Date;

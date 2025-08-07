@@ -8,29 +8,27 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { Bet } from "@/lib/types"
 
 
 interface DataTableRowActionsProps<TData> {
-  row: Row<TData>
+  row: Row<TData>,
+  updateBetStatus: (betId: string, newStatus: 'Ganada' | 'Perdida') => void;
 }
 
 export function DataTableRowActions<TData>({
   row,
+  updateBetStatus,
 }: DataTableRowActionsProps<TData>) {
   const bet = row.original as Bet
 
-  // Placeholder actions. In production, these would trigger server actions.
-  const markAsWon = () => {
-    console.log("Marking bet as won:", bet.id)
+  const handleMarkAsWon = () => {
+    updateBetStatus(bet.id, 'Ganada')
   }
 
-  const markAsLost = () => {
-    console.log("Marking bet as lost:", bet.id)
+  const handleMarkAsLost = () => {
+    updateBetStatus(bet.id, 'Perdida')
   }
 
   if (bet.status !== 'Pendiente') {
@@ -49,11 +47,11 @@ export function DataTableRowActions<TData>({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem onClick={markAsWon}>
+        <DropdownMenuItem onClick={handleMarkAsWon}>
           <Check className="mr-2 h-4 w-4 text-green-500"/>
           Marcar Ganada
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={markAsLost}>
+        <DropdownMenuItem onClick={handleMarkAsLost}>
           <X className="mr-2 h-4 w-4 text-red-500"/>
           Marcar Perdida
         </DropdownMenuItem>

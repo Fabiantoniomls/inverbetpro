@@ -1,7 +1,6 @@
-
 "use client"
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SavedAnalysis } from '@/lib/types';
@@ -28,6 +27,10 @@ import { counterAnalysis } from '@/ai/flows/counter-analysis';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/hooks/use-auth';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, Timestamp } from 'firebase/firestore';
+
 
 // Custom renderer for tables to add ShadCN styling
 function MarkdownTable({ children }: { children: React.ReactNode }) {
@@ -114,7 +117,7 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
             <CardHeader>
                 <CardTitle className="text-xl">{analysis.title}</CardTitle>
                 <CardDescription>
-                    Guardado el {format(analysis.createdAt, "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
+                    Guardado el {analysis.createdAt ? format(analysis.createdAt, "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es }) : 'fecha desconocida'}
                 </CardDescription>
             </CardHeader>
             <CardContent className="prose prose-sm dark:prose-invert max-w-none">
@@ -236,49 +239,55 @@ export default function SavedAnalysesPage() {
     const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
-
-    const fetchAnalyses = () => {
-        try {
-            const storedAnalyses = localStorage.getItem('savedAnalyses');
-            if (storedAnalyses) {
-                const parsedAnalyses = JSON.parse(storedAnalyses).map((analysis: any) => ({
-                    ...analysis,
-                    createdAt: new Date(analysis.createdAt),
-                }));
-                 // Sort by date descending
-                const sortedAnalyses = parsedAnalyses.sort((a: SavedAnalysis, b: SavedAnalysis) => b.createdAt.getTime() - a.createdAt.getTime());
-                setAnalyses(sortedAnalyses);
-            }
-        } catch (error)
-        {
-            console.error("Error fetching analyses from localStorage:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { user } = useAuth();
 
     useEffect(() => {
-        fetchAnalyses();
-    }, []);
+        if (!user) {
+            if (!loading) setLoading(true);
+            return;
+        }
 
-    const deleteAnalysis = (id: string) => {
+        setLoading(true);
+        const analysesRef = collection(db, 'savedAnalyses');
+        const q = query(analysesRef, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const analysesData = querySnapshot.docs.map(doc => {
+                const docData = doc.data();
+                return {
+                    id: doc.id,
+                    ...docData,
+                    createdAt: (docData.createdAt as Timestamp)?.toDate() ?? new Date(),
+                } as SavedAnalysis;
+            });
+            setAnalyses(analysesData);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error fetching analyses from Firestore:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'No se pudieron cargar los análisis.' });
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [user, toast]);
+
+    const deleteAnalysis = useCallback(async (id: string) => {
         try {
-            const updatedAnalyses = analyses.filter(analysis => analysis.id !== id);
-            localStorage.setItem('savedAnalyses', JSON.stringify(updatedAnalyses));
-            setAnalyses(updatedAnalyses);
+            await deleteDoc(doc(db, 'savedAnalyses', id));
             toast({
                 title: 'Análisis Eliminado',
-                description: 'El análisis ha sido eliminado correctamente.',
+                description: 'El análisis ha sido eliminado correctamente de Firestore.',
             });
+            // The onSnapshot listener will automatically update the UI
         } catch (error) {
-            console.error("Error deleting analysis from localStorage:", error);
+            console.error("Error deleting analysis from Firestore:", error);
             toast({
                 variant: 'destructive',
                 title: 'Error',
                 description: 'No se pudo eliminar el análisis.',
             });
         }
-    }
+    }, [toast]);
 
 
     if (loading) {
@@ -306,6 +315,21 @@ export default function SavedAnalysesPage() {
         );
     }
     
+    if (!user) {
+        return (
+             <div className="space-y-8 text-center">
+                 <h1 className="text-3xl font-bold tracking-tight">Análisis Guardados</h1>
+                 <p className="text-muted-foreground">Revisa, gestiona y mejora tus análisis guardados.</p>
+                <div className="mt-12">
+                    <h3 className="text-xl font-semibold">Inicia sesión para ver tus análisis</h3>
+                    <p className="text-muted-foreground mt-2">
+                        Aquí aparecerán todos los análisis que guardes.
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
     if (analyses.length === 0) {
         return (
             <div className="space-y-8 text-center">

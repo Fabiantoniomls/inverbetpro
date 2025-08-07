@@ -7,7 +7,11 @@ import { DataTableColumnHeader } from "./data-table-column-header"
 import { DataTableRowActions } from "./data-table-row-actions"
 import { format } from 'date-fns'
 
-export const columns: ColumnDef<Bet>[] = [
+interface ColumnsProps {
+  updateBetStatus: (betId: string, newStatus: 'Ganada' | 'Perdida') => void;
+}
+
+export const columns = ({ updateBetStatus }: ColumnsProps): ColumnDef<Bet>[] => [
   {
     accessorKey: "match",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Partido / Selección" />,
@@ -82,6 +86,6 @@ export const columns: ColumnDef<Bet>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />,
+    cell: ({ row }) => <DataTableRowActions row={row} updateBetStatus={updateBetStatus} />,
   },
 ]
