@@ -16,26 +16,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const FundamentalAnalysisInputSchema = z.object({
-  matchDescription: z.string().describe('Description of the match.'),
-  teamAStrengths: z.string().describe('Strengths of team A.'),
-  teamAWeaknesses: z.string().describe('Weaknesses of team A.'),
-  teamBStrengths: z.string().describe('Strengths of team B.'),
-  teamBWeaknesses: z.string().describe('Weaknesses of team B.'),
-  keyPlayerTeamA: z.string().describe('Key player of team A.'),
-  keyPlayerTeamB: z.string().describe('Key player of team B.'),
-  odds: z.number().describe('Odds for the bet.'),
-  impliedProbability: z.number().describe('Implied probability of the bet.'),
-});
-export type FundamentalAnalysisInput = z.infer<typeof FundamentalAnalysisInputSchema>;
-
-const FundamentalAnalysisOutputSchema = z.object({
-  analysis: z.string().describe('Qualitative analysis of the match.'),
-  valueTable: z.string().describe('Value table for the bet.'),
-});
-export type FundamentalAnalysisOutput = z.infer<typeof FundamentalAnalysisOutputSchema>;
+import { FundamentalAnalysisInputSchema, FundamentalAnalysisOutputSchema, type FundamentalAnalysisInput, type FundamentalAnalysisOutput } from '@/lib/types/analysis';
 
 export async function fundamentalAnalysis(input: FundamentalAnalysisInput): Promise<FundamentalAnalysisOutput> {
   return fundamentalAnalysisFlow(input);

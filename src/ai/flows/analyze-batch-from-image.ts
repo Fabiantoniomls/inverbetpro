@@ -7,47 +7,19 @@
  * runs fundamental analysis on each match, and returns a consolidated result.
  *
  * - analyzeBatchFromImage - The main function for the flow.
- * - AnalyzeBatchFromImageInput - The input type for the flow.
- * - AnalyzeBatchFromImageOutput - The return type for the flow.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { fundamentalAnalysis, FundamentalAnalysisInput } from './fundamental-analysis';
-
-// Schema for a single match extracted from the image
-const ExtractedMatchSchema = z.object({
-  sport: z.enum(['Fútbol', 'Tenis']),
-  participants: z.string().describe('Names of the teams or players.'),
-  odds: z.object({
-    local: z.number().optional().describe('Odds for home team win.'),
-    draw: z.number().optional().describe('Odds for a draw.'),
-    visitor: z.number().optional().describe('Odds for away team win.'),
-    player1: z.number().optional().describe('Odds for player 1 to win.'),
-    player2: z.number().optional().describe('Odds for player 2 to win.'),
-  }),
-});
-export type ExtractedMatch = z.infer<typeof ExtractedMatchSchema>;
-
-
-export const AnalyzeBatchFromImageInputSchema = z.object({
-  photoDataUri: z
-    .string()
-    .describe(
-      "A photo of a betting slip, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-export type AnalyzeBatchFromImageInput = z.infer<typeof AnalyzeBatchFromImageInputSchema>;
-
-
-export const AnalyzeBatchFromImageOutputSchema = z.object({
-    detailedAnalyses: z.array(z.object({
-        match: z.string(),
-        analysis: z.string(),
-    })).describe("An array of detailed analyses for each match."),
-    summaryValueTable: z.string().describe("A single markdown table summarizing all value bets found, ordered by value.")
-});
-export type AnalyzeBatchFromImageOutput = z.infer<typeof AnalyzeBatchFromImageOutputSchema>;
+import { fundamentalAnalysis } from './fundamental-analysis';
+import { 
+    ExtractedMatchSchema, 
+    AnalyzeBatchFromImageInputSchema, 
+    AnalyzeBatchFromImageOutputSchema,
+    type AnalyzeBatchFromImageInput,
+    type AnalyzeBatchFromImageOutput,
+    type FundamentalAnalysisInput,
+} from '@/lib/types/analysis';
 
 
 export async function analyzeBatchFromImage(input: AnalyzeBatchFromImageInput): Promise<AnalyzeBatchFromImageOutput> {

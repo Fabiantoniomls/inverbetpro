@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { analyzeBatchFromImage, type AnalyzeBatchFromImageOutput } from '@/ai/flows/analyze-batch-from-image';
+import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
+import type { AnalyzeBatchFromImageOutput } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 
 function MarkdownTable({ markdown }: { markdown: string }) {
