@@ -10,7 +10,7 @@ import { es } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -42,16 +42,16 @@ const markdownComponents = { table: MarkdownTable, thead: MarkdownTHead, tr: Mar
 
 // Function to split the analysis content
 const getAnalysisParts = (content: string) => {
-    const detailedAnalysisRegex = /### Análisis Detallado de Selecciones([\s\S]*?)### (TABLA DE APUESTAS DE VALOR|Conclusiones Rápidas)/;
-    const valueTableAndRecsRegex = /### TABLA DE APUESTAS DE VALOR([\s\S]*)/;
+    const detailedAnalysisRegex = /(### Análisis Detallado de Selecciones[\s\S]*?)(?=### Conclusiones Rápidas|### TABLA DE APUESTAS DE VALOR)/;
+    const valueTableAndRecsRegex = /(### TABLA DE APUESTAS DE VALOR[\s\S]*)/;
     
     const detailedMatch = content.match(detailedAnalysisRegex);
     const valueTableAndRecsMatch = content.match(valueTableAndRecsRegex);
 
     return {
         introduction: content.split('###')[0],
-        detailedAnalysis: detailedMatch ? `### Análisis Detallado de Selecciones\n${detailedMatch[1]}` : '',
-        valueTableAndRecs: valueTableAndRecsMatch ? `### TABLA DE APUESTAS DE VALOR\n${valueTableAndRecsMatch[1]}` : ''
+        detailedAnalysis: detailedMatch ? detailedMatch[1] : '',
+        valueTableAndRecs: valueTableAndRecsMatch ? valueTableAndRecsMatch[1] : ''
     };
 };
 
@@ -167,23 +167,22 @@ export default function SavedAnalysesPage() {
                                     {introduction}
                                 </ReactMarkdown>
                                 
+                                <div className="py-4">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                        {valueTableAndRecs}
+                                    </ReactMarkdown>
+                                </div>
+                                
                                 <Accordion type="single" collapsible className="w-full">
-                                    <AccordionItem value="item-1" className="border-none">
-                                         <AccordionContent>
+                                    <AccordionItem value="item-1" className="border-none -mt-4">
+                                        <AccordionTrigger className="text-sm text-primary hover:no-underline justify-start gap-1 py-2">
+                                            <span>Ver Análisis Completo</span>
+                                        </AccordionTrigger>
+                                        <AccordionContent>
                                             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                                                 {detailedAnalysis}
                                             </ReactMarkdown>
                                         </AccordionContent>
-                                        <div className="py-4">
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                                {valueTableAndRecs}
-                                            </ReactMarkdown>
-                                        </div>
-                                        <AccordionTrigger className="text-sm text-primary hover:no-underline -mt-4 py-2">
-                                            <span className="flex items-center gap-1">
-                                                Ver Análisis Completo
-                                            </span>
-                                        </AccordionTrigger>
                                     </AccordionItem>
                                 </Accordion>
 
