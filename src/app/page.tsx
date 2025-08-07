@@ -13,7 +13,7 @@ export default function Home() {
             <h1 className="text-2xl font-bold font-headline">Inverapuestas Pro</h1>
           </div>
           <nav>
-            <Link href="/dashboard">
+            <Link href="/login">
               <Button>
                 Entrar a la App
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -57,7 +57,7 @@ export default function Home() {
               description="Visualiza tu progreso con KPIs detallados y un gráfico de rendimiento histórico."
             />
             <FeatureCard
-              icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-primary"><path d="M12 22V12"/><path d="M12 12V2L18 5l-6 3"/><path d="M12 12V2L6 5l6 3"/><path d="M1 12h10"/><path d="M23 12h-10"/></svg>}
+              icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" viewPort="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-primary"><path d="M12 22V12"/><path d="M12 12V2L18 5l-6 3"/><path d="M12 12V2L6 5l6 3"/><path d="M1 12h10"/><path d="M23 12h-10"/></svg>}
               title="Gestión de Capital"
               description="Calcula el stake óptimo para cada apuesta usando modelos como el Criterio de Kelly."
             />
