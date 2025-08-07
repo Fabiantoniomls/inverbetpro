@@ -32,7 +32,7 @@ export function AppSidebar() {
           href="/"
           className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" viewPort="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 transition-all group-hover:scale-110"><path d="M12 22V12"/><path d="M12 12V2L18 5l-6 3"/><path d="M12 12V2L6 5l6 3"/><path d="M1 12h10"/><path d="M23 12h-10"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 transition-all group-hover:scale-110"><path d="M12 22V12"/><path d="M12 12V2L18 5l-6 3"/><path d="M12 12V2L6 5l6 3"/><path d="M1 12h10"/><path d="M23 12h-10"/></svg>
           <span className="sr-only">Inverapuestas Pro</span>
         </Link>
         <TooltipProvider>
