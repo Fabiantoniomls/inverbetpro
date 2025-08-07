@@ -5,13 +5,9 @@ export const ExtractedMatchSchema = z.object({
     sport: z.enum(['Fútbol', 'Tenis']),
     tournament: z.string().optional().describe('The name of the tournament, if available.'),
     participants: z.string().describe('Names of the teams or players.'),
-    odds: z.object({
-      local: z.number().optional().describe('Decimal odds for local team win (for Football).'),
-      draw: z.number().optional().describe('Decimal odds for a draw (for Football).'),
-      visitor: z.number().optional().describe('Decimal odds for visitor team win (for Football).'),
-      player1: z.number().optional().describe('Decimal odds for player 1 win (for Tennis).'),
-      player2: z.number().optional().describe('Decimal odds for player 2 win (for Tennis).'),
-    }).describe('An object with the decimal odds for each possible outcome.'),
+    market: z.string().describe("The market for the bet (e.g., 'Ganador', 'Resultado del partido')."),
+    selection: z.string().describe("The specific outcome selected in the bet slip."),
+    odds: z.number().describe("The decimal odds for the specific selection."),
   });
 export type ExtractedMatch = z.infer<typeof ExtractedMatchSchema>;
   

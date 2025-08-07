@@ -29,15 +29,33 @@ const extractMatchesPrompt = ai.definePrompt({
     name: 'extractMatchesFromImagePrompt',
     input: { schema: z.object({ photoDataUri: z.string() }) },
     output: { schema: z.object({ matches: z.array(ExtractedMatchSchema) }) },
-    prompt: `Actúa como un experto en extracción de datos. Analiza meticulosamente la siguiente imagen de una casa de apuestas. Identifica cada partido de fútbol o tenis listado, y si es visible, el nombre del torneo (ej. "Cincinnati Open"). Para cada partido, extrae de forma estructurada los nombres de los participantes y las cuotas decimales para cada resultado principal. Ignora cualquier otra información. Devuelve los datos como un array de objetos JSON.
+    prompt: `Actúa como un experto en extracción de datos de cupones de apuestas. Analiza meticulosamente la siguiente imagen de un cupón de apuestas combinado. Identifica cada selección de apuesta individual.
+
+Para cada selección, extrae los siguientes datos de forma estructurada:
+1.  **Sport**: Identifica si es "Fútbol" o "Tenis" basándote en el icono (pelota de fútbol vs pelota de tenis) o los nombres.
+2.  **Participants**: Los nombres completos de los dos equipos o jugadores que se enfrentan. (Ej: "FC Bayern Munchen - Tottenham Hotspur").
+3.  **Market**: El mercado al que se apostó. (Ej: "Ganador" o "Resultado del partido").
+4.  **Selection**: El resultado específico que se seleccionó en el cupón. (Ej: "Joao Fonseca" o "FC Bayern Munchen").
+5.  **Odds**: La cuota decimal asociada a ESA SELECCIÓN específica.
+6.  **Tournament**: Si es visible, el nombre del torneo (ej. "Cincinnati Open").
+
+Devuelve los datos como un array de objetos JSON. Ignora cualquier otra información como la cuota total de la combinada, ganancias potenciales, etc.
 
 Ejemplo de Salida JSON Esperada:
 [
   {
     "sport": "Tenis",
-    "tournament": "Cincinnati Open",
-    "participants": "Alcaraz vs Djokovic",
-    "odds": { "player1": 1.85, "player2": 2.15 }
+    "participants": "Joao Fonseca - Bu Yunchaokete",
+    "market": "Ganador",
+    "selection": "Joao Fonseca",
+    "odds": 1.42
+  },
+  {
+    "sport": "Fútbol",
+    "participants": "FC Bayern Munchen - Tottenham Hotspur",
+    "market": "Resultado del partido",
+    "selection": "FC Bayern Munchen",
+    "odds": 1.50
   }
 ]
 
@@ -48,39 +66,40 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
   name: 'consolidatedAnalysisPrompt',
   input: { schema: z.object({ 
     matchesJson: z.string(),
-    surface: z.string().describe("The playing surface (Hard, Clay, or Grass). This is a CRITICAL factor."),
+    surface: z.string().describe("The playing surface (Hard, Clay, or Grass). This is a CRITICAL factor for tennis matches."),
   }) },
   output: { schema: AnalyzeBatchFromImageOutputSchema },
   prompt: `
-  Eres "Inverapuestas Pro", un analista deportivo de IA de élite, especializado en encontrar apuestas de valor (+EV) en tenis y fútbol. Tu estilo es directo, visual y lleno de "insights". Te han proporcionado una lista de partidos en formato JSON y, de forma crucial, la superficie de juego: **{{{surface}}}**.
+  Eres "Inverapuestas Pro", un analista deportivo de IA de élite, especializado en encontrar apuestas de valor (+EV) en tenis y fútbol. Tu estilo es directo, visual y lleno de "insights". Te han proporcionado una lista de selecciones de un cupón de apuestas en formato JSON. Para los partidos de tenis, un factor CRÍTICO es la superficie de juego: **{{{surface}}}**.
 
-  **La superficie es el factor más importante. TODO tu análisis debe girar en torno a cómo rinden los jugadores/equipos EN ESA SUPERFICIE ESPECÍFICA.**
+  **Tu análisis de tenis DEBE girar en torno a cómo rinden los jugadores EN ESA SUPERFICIE ESPECÍFICA.** Para el fútbol, la superficie no es relevante.
 
   Tu tarea es generar un informe de análisis completo en formato Markdown, en español. El informe debe tener la siguiente estructura:
 
-  1.  **Análisis Detallado Partidos Destacados:**
-      *   Para cada partido, presenta un análisis conciso pero potente, **centrado en la superficie {{{surface}}}**.
+  1.  **Análisis Detallado de Selecciones:**
+      *   Para cada selección del cupón, presenta un análisis conciso pero potente.
+      *   **Para Tenis:** Céntrate en el rendimiento en la superficie **{{{surface}}}**. Incluye datos clave como % de victorias en la superficie, H2H en la misma superficie, y estadísticas relevantes (ej. % de puntos ganados al servicio en {{{surface}}}).
+      *   **Para Fútbol:** Analiza la forma actual, H2H, tácticas y noticias relevantes (lesiones, etc.).
       *   Incluye emojis para hacerlo más visual (ej. 💥, 🚀, 💎 para sorpresas, ✅ para valor, ❌ para no valor).
-      *   Menciona datos clave **relevantes para la superficie**: % de victorias en la superficie, H2H en la misma superficie, estadísticas importantes (ej. % de puntos ganados al servicio en {{{surface}}}).
-      *   Calcula y muestra la "Probabilidad real" estimada por ti para cada resultado, **basada en el rendimiento en {{{surface}}}**.
-      *   Calcula y muestra el "Valor apuesta" (EV = (Probabilidad Real * Cuota) - 1). Marca si hay valor o no.
+      *   Calcula y muestra la "Probabilidad real" estimada por ti para el resultado SELECCIONADO.
+      *   Calcula y muestra el "Valor apuesta" (EV = (Probabilidad Real * Cuota) - 1). Marca si la selección tiene valor o no.
 
-  2.  **Conclusiones Rápidas Otros Partidos:**
-      *   Si hay partidos menos interesantes, menciónalos brevemente aquí.
+  2.  **Conclusiones Rápidas (Opcional):**
+      *   Si hay selecciones que son muy claras o no requieren mucho detalle, coméntalas brevemente aquí.
 
   3.  **TABLA DE APUESTAS DE VALOR:**
-      *   Crea una tabla en Markdown con las columnas: | Partido | Resultado | Cuotas | Prob. Estimada (%) | Valor Calculado |
-      *   **Importante:** Incluye en esta tabla ÚNICAMENTE las apuestas con valor positivo (EV > 0).
+      *   Crea una tabla en Markdown con las columnas: | Partido | Selección | Cuota | Prob. Estimada (%) | Valor Calculado |
+      *   **Importante:** Incluye en esta tabla ÚNICAMENTE las selecciones con valor positivo (EV > 0).
       *   **Crítico:** Ordena la tabla de MAYOR a MENOR "Valor Calculado".
 
   4.  **Recomendaciones Finales:**
-      *   Ofrece 2-3 recomendaciones clave basadas en el análisis, destacando las mejores oportunidades.
-      *   Añade una nota final de estrategia si es necesario, siempre recordando la importancia de la superficie.
+      *   Ofrece 2-3 recomendaciones clave basadas en tu análisis, destacando las mejores oportunidades encontradas en el cupón.
+      *   Añade una nota final de estrategia si es necesario (ej. "Aunque hay valor en X, es una apuesta de alto riesgo").
 
-  Utiliza el siguiente JSON de partidos para generar tu informe:
+  Utiliza el siguiente JSON de selecciones para generar tu informe:
   {{{matchesJson}}}
 
-  Adopta un tono profesional pero accesible. ¡Demuestra por qué entender la superficie lo es todo!
+  Adopta un tono profesional pero accesible. ¡Demuestra por qué entender el contexto (especialmente la superficie en tenis) lo es todo!
   `
 });
 
