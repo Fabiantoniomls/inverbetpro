@@ -10,16 +10,17 @@ import { format } from 'date-fns'
 export const columns: ColumnDef<Bet>[] = [
   {
     accessorKey: "match",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Partido / Mercado" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Partido / Selección" />,
     cell: ({ row }) => {
       return (
         <div className="flex flex-col">
           <span className="font-medium max-w-[300px] truncate">{row.original.match}</span>
-          <span className="text-muted-foreground text-sm">{row.original.market}</span>
+          <span className="text-muted-foreground text-sm">{row.original.selection} ({row.original.market})</span>
         </div>
       )
     },
     enableSorting: false,
+    enableHiding: false,
   },
   {
     accessorKey: "status",
@@ -29,12 +30,22 @@ export const columns: ColumnDef<Bet>[] = [
       const className = 
         status === 'Ganada' ? 'bg-green-900/50 text-green-400 border-green-700/30 hover:bg-green-900/70' :
         status === 'Perdida' ? 'bg-red-900/50 text-red-400 border-red-700/30 hover:bg-red-900/70' :
-        status === 'Pendiente' ? 'bg-yellow-900/50 text-yellow-400 border-yellow-700/30 hover:bg-yellow-900/70' : '';
+        status === 'Pendiente' ? 'bg-yellow-900/50 text-yellow-400 border-yellow-700/30 hover:bg-yellow-900/70' : 
+        'bg-gray-700/50 text-gray-400 border-gray-600/30';
 
       return <Badge variant="outline" className={`capitalize ${className}`}>{status}</Badge>
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id))
+    },
+  },
+    {
+    accessorKey: "valueCalculated",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Valor" />,
+    cell: ({ row }) => {
+        const value = row.original.valueCalculated;
+        const color = value > 0 ? 'text-green-400' : 'text-red-400';
+        return <span className={color}>{value > 0 ? `+${(value * 100).toFixed(1)}%` : `${(value * 100).toFixed(1)}%`}</span>
     },
   },
   {
@@ -60,7 +71,7 @@ export const columns: ColumnDef<Bet>[] = [
   {
     accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Fecha" />,
-    cell: ({ row }) => format(row.original.createdAt.toDate(), 'dd/MM/yyyy'),
+    cell: ({ row }) => format(row.original.createdAt.toDate(), 'dd/MM/yyyy HH:mm'),
   },
   {
     id: "actions",

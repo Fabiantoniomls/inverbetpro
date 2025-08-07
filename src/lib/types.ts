@@ -16,6 +16,7 @@ export interface Bet {
   sport: 'Fútbol' | 'Tenis';
   match: string;
   market: string;
+  selection: string;
   odds: number;
   stake: number;
   status: 'Pendiente' | 'Ganada' | 'Perdida' | 'Nula';

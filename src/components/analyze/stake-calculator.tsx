@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Loader2, ArrowLeft, CheckCircle } from "lucide-react"
+import { Loader2, ArrowLeft, CheckCircle, Save } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { stakingCalculator, StakingCalculatorInput } from '@/ai/flows/staking-calculator';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 // Placeholder user data. In a real app, this would be fetched for the logged-in user.
 const userData = {
@@ -22,6 +23,7 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
   const [stake, setStake] = useState<number | null>(null);
   const [isBetRegistered, setIsBetRegistered] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleCalculateStake = async () => {
     setIsLoading(true);
@@ -53,19 +55,24 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
       setIsLoading(true);
       try {
         // In a real app, this would be a server action to save the bet to Firestore.
-        // The action would take details like match, market, odds, stake, etc.
+        // The action would take details like match, market, odds, stake, status, etc.
         await new Promise(resolve => setTimeout(resolve, 1000));
+        
         setIsBetRegistered(true);
         toast({
-            title: "Apuesta Registrada",
-            description: `Tu apuesta de $${stake?.toFixed(2)} ha sido guardada.`,
-            variant: "default"
+            title: "Apuesta Guardada",
+            description: `Tu apuesta de $${stake?.toFixed(2)} ha sido guardada en el historial.`,
+            action: (
+              <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/history')}>
+                Ver Historial
+              </Button>
+            ),
         });
       } catch (error) {
         console.error("Error registering bet:", error);
         toast({
             variant: "destructive",
-            title: "Error al Registrar",
+            title: "Error al Guardar",
             description: "No se pudo guardar la apuesta en el historial."
         });
       } finally {
@@ -78,12 +85,14 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
       <CardContent className="space-y-4 pt-6">
         {!stake && !isLoading && (
             <Alert>
-                <AlertTitle>Datos del Análisis</AlertTitle>
+                <AlertTitle>Datos para Cálculo de Stake</AlertTitle>
                 <AlertDescription>
-                    <p><strong>Probabilidad Estimada:</strong> {(stakeData.probability * 100).toFixed(2)}%</p>
-                    <p><strong>Cuotas:</strong> {stakeData.odds.toFixed(2)}</p>
-                    <p><strong>Bankroll Actual:</strong> ${userData.currentBankroll.toFixed(2)}</p>
-                    <p><strong>Modelo de Staking:</strong> {userData.preferredStakingModel}</p>
+                    <ul className="list-disc pl-5 space-y-1 mt-2">
+                      <li><strong>Probabilidad Estimada:</strong> {(stakeData.probability * 100).toFixed(2)}%</li>
+                      <li><strong>Cuota de Mercado:</strong> {stakeData.odds.toFixed(2)}</li>
+                      <li><strong>Bankroll Actual:</strong> ${userData.currentBankroll.toFixed(2)}</li>
+                      <li><strong>Modelo de Staking Activo:</strong> {userData.preferredStakingModel}</li>
+                    </ul>
                 </AlertDescription>
             </Alert>
         )}
@@ -105,11 +114,11 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
         )}
         
         {isBetRegistered && (
-            <Alert variant="default" className="border-green-500">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <AlertTitle>¡Apuesta Registrada!</AlertTitle>
+            <Alert variant="default" className="border-green-500 bg-green-950/30">
+                <CheckCircle className="h-4 w-4 text-green-400" />
+                <AlertTitle>¡Apuesta Guardada en el Historial!</AlertTitle>
                 <AlertDescription>
-                    Tu apuesta de ${stake?.toFixed(2)} ha sido guardada en tu historial.
+                    La operación con un stake de <strong>${stake?.toFixed(2)}</strong> ha sido registrada.
                 </AlertDescription>
             </Alert>
         )}
@@ -117,23 +126,23 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
       <CardFooter className="flex justify-between">
         <Button variant="outline" onClick={onBack} disabled={isLoading || isBetRegistered}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver
+          Volver al Análisis
         </Button>
         {stake === null && (
             <Button onClick={handleCalculateStake} disabled={isLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Calcular
+            Calcular Stake
             </Button>
         )}
         {stake !== null && !isBetRegistered &&(
             <Button onClick={handleRegisterBet} disabled={isLoading} className="bg-green-600 hover:bg-green-700 text-white">
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Registrar Apuesta
+                <Save className="mr-2 h-4 w-4" />
+                {isLoading ? 'Guardando...' : 'Guardar en Historial'}
             </Button>
         )}
         {isBetRegistered && (
-             <Button onClick={onBack} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                Finalizar
+             <Button onClick={() => router.push('/dashboard/analyze')} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                Analizar Otra
              </Button>
         )}
       </CardFooter>
