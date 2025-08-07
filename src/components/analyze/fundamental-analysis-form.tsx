@@ -8,23 +8,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { AnalysisResult } from './analysis-result'
-
-// Mock server action for development. In production this would call the Genkit flow.
-const runFundamentalAnalysis = async (data: any) => {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return {
-        analysis: "Basado en el análisis de fortalezas y debilidades, el Equipo A tiene una ligera ventaja. Su defensa sólida podría neutralizar el ataque del Equipo B. Sin embargo, el jugador clave del Equipo B está en un momento de forma excepcional y podría ser un factor decisivo.",
-        valueTable: `
-| Apuesta Potencial         | Prob. Estimada | Prob. Implícita | Cuota | EV (Valor Esperado) | Decisión          |
-|---------------------------|----------------|-----------------|-------|---------------------|-------------------|
-| Victoria Equipo A         | 55%            | 45.45%          | 2.20  | +0.212              | **Apostar**       |
-| Empate                    | 25%            | 28.57%          | 3.50  | -0.125              | No Apostar        |
-| Victoria Equipo B         | 20%            | 29.41%          | 3.40  | -0.320              | No Apostar        |
-        `,
-        odds: data.odds,
-        estimatedProbability: 0.55,
-    };
-}
+import { fundamentalAnalysis } from '@/ai/flows/fundamental-analysis'
+import { useToast } from '@/hooks/use-toast'
 
 
 export function FundamentalAnalysisForm() {
@@ -41,6 +26,7 @@ export function FundamentalAnalysisForm() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const { toast } = useToast();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -51,14 +37,43 @@ export function FundamentalAnalysisForm() {
     e.preventDefault()
     setIsLoading(true)
     setResult(null)
-    const analysisInput = {
-      ...formData,
-      odds: parseFloat(formData.odds),
-      impliedProbability: parseFloat(formData.impliedProbability)
+    
+    try {
+      const analysisInput = {
+        ...formData,
+        odds: parseFloat(formData.odds),
+        impliedProbability: parseFloat(formData.impliedProbability)
+      }
+      const analysisResult = await fundamentalAnalysis(analysisInput);
+      
+      const valueRow = analysisResult.valueTable.split('\n').find(row => row.includes('**Apostar**'));
+      let estimatedProbability = 0;
+      if (valueRow) {
+        const cells = valueRow.split('|').map(c => c.trim());
+        const probCell = cells[2];
+        if (probCell) {
+          const probMatch = probCell.match(/\d+(\.\d+)?/);
+          if (probMatch) {
+            estimatedProbability = parseFloat(probMatch[0]) / 100;
+          }
+        }
+      }
+
+      setResult({
+        ...analysisResult,
+        odds: analysisInput.odds,
+        estimatedProbability: estimatedProbability || 0.5,
+      })
+    } catch (error) {
+      console.error("Error running fundamental analysis: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error en el Análisis',
+        description: 'No se pudo completar el análisis. Inténtalo de nuevo.'
+      })
+    } finally {
+      setIsLoading(false)
     }
-    const analysisResult = await runFundamentalAnalysis(analysisInput);
-    setResult(analysisResult)
-    setIsLoading(false)
   }
 
   if (result) {

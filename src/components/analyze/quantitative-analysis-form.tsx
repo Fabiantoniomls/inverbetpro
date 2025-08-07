@@ -8,37 +8,45 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { AnalysisResult } from './analysis-result'
-
-// Mock server action for development. In production this would call the Genkit flow.
-const runQuantitativeAnalysis = async (data: any) => {
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return {
-        analysis: "El modelo Poisson-xG, basado en los datos de xG extraídos, sugiere una probabilidad de victoria local superior a la implícita en las cuotas. Se ha identificado una apuesta de valor.",
-        valueTable: `
-| Outcome         | Real Probability | Implied Probability | Odds | Value         |
-|-----------------|------------------|---------------------|------|---------------|
-| Home Win        | 52%              | 45.45%              | 2.20 | **+EV (Value)** |
-| Draw            | 25%              | 28.57%              | 3.50 | -EV             |
-| Away Win        | 23%              | 29.41%              | 3.40 | -EV             |
-`,
-        odds: 2.20,
-        estimatedProbability: 0.52,
-    };
-}
+import { quantitativeAnalysis, QuantitativeAnalysisInput } from '@/ai/flows/quantitative-analysis'
+import { useToast } from '@/hooks/use-toast'
 
 export function QuantitativeAnalysisForm() {
-  const [url, setUrl] = useState('https://fbref.com/en/matches/...')
-  const [modelType, setModelType] = useState('Poisson-xG')
+  const [url, setUrl] = useState('https://fbref.com/en/matches/')
+  const [modelType, setModelType] = useState<'Poisson-xG' | 'Elo'>('Poisson-xG')
   const [isLoading, setIsLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setResult(null)
-    const analysisResult = await runQuantitativeAnalysis({ url, modelType });
-    setResult(analysisResult)
-    setIsLoading(false)
+    
+    try {
+      const input: QuantitativeAnalysisInput = { url, modelType };
+      const analysisResult = await quantitativeAnalysis(input);
+      
+      const homeWinProb = analysisResult.realProbabilities.homeWin || 0;
+      const odds = 1 / homeWinProb;
+
+      setResult({
+        analysis: `El modelo ${modelType} ha analizado los datos. La probabilidad real de victoria local es del ${(homeWinProb * 100).toFixed(2)}%.`,
+        valueTable: analysisResult.valueTable,
+        odds: isFinite(odds) ? odds : 2.0,
+        estimatedProbability: homeWinProb,
+      });
+
+    } catch (error) {
+      console.error("Error running quantitative analysis:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error en el Análisis',
+        description: 'No se pudo completar el análisis cuantitativo. Comprueba la URL y vuelve a intentarlo.',
+      });
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (result) {
@@ -54,7 +62,7 @@ export function QuantitativeAnalysisForm() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="modelType">Modelo Estadístico</Label>
-          <Select name="modelType" value={modelType} onValueChange={setModelType}>
+          <Select name="modelType" value={modelType} onValueChange={(value) => setModelType(value as 'Poisson-xG' | 'Elo')}>
             <SelectTrigger>
               <SelectValue placeholder="Selecciona un modelo" />
             </SelectTrigger>

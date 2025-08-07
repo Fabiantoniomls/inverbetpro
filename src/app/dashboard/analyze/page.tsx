@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { FundamentalAnalysisForm } from "@/components/analyze/fundamental-analysis-form"
 import { QuantitativeAnalysisForm } from "@/components/analyze/quantitative-analysis-form"
+import { ImageAnalysisUploader } from "@/components/analyze/image-analysis-uploader"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { BrainCircuit, Calculator } from "lucide-react"
+import { BrainCircuit, Calculator, Image as ImageIcon } from "lucide-react"
 
 export default function AnalyzePage() {
   return (
@@ -13,7 +14,7 @@ export default function AnalyzePage() {
       </p>
       
       <Tabs defaultValue="fundamental" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
+        <TabsList className="grid w-full grid-cols-3 md:w-[600px]">
           <TabsTrigger value="fundamental">
             <BrainCircuit className="mr-2 h-4 w-4" />
             Análisis Fundamental
@@ -21,6 +22,10 @@ export default function AnalyzePage() {
           <TabsTrigger value="quantitative">
             <Calculator className="mr-2 h-4 w-4" />
             Análisis Cuantitativo
+          </TabsTrigger>
+          <TabsTrigger value="image">
+            <ImageIcon className="mr-2 h-4 w-4" />
+            Análisis desde Imagen
           </TabsTrigger>
         </TabsList>
         <TabsContent value="fundamental">
@@ -44,6 +49,19 @@ export default function AnalyzePage() {
             </CardHeader>
             <QuantitativeAnalysisForm />
           </Card>
+        </TabsContent>
+        <TabsContent value="image">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Análisis por Lote desde Imagen</CardTitle>
+                    <CardDescription>
+                        Sube una captura de pantalla de tu casa de apuestas y obtén un análisis de valor para todos los partidos visibles.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ImageAnalysisUploader />
+                </CardContent>
+            </Card>
         </TabsContent>
       </Tabs>
     </div>

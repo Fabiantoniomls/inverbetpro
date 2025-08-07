@@ -5,55 +5,72 @@ import { CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, ArrowLeft, CheckCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { stakingCalculator, StakingCalculatorInput } from '@/ai/flows/staking-calculator';
+import { useToast } from '@/hooks/use-toast';
 
-// Placeholder user data and mock server action. In production, this would use real user data and call the Genkit flow.
+// Placeholder user data. In a real app, this would be fetched for the logged-in user.
 const userData = {
     currentBankroll: 5000,
-    preferredStakingModel: 'Kelly Fraccionario',
-    kellyFraction: 0.25, // 1/4 Kelly
-    fixedStakeAmount: 50,
-    percentageStakeAmount: 2
-}
-
-const runStakingCalculation = async (data: any) => {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    let recommendedStake = 0;
-    const { probability, odds, currentBankroll, preferredStakingModel, kellyFraction } = data;
-    if(preferredStakingModel === 'Kelly Fraccionario') {
-        const edge = (probability * odds) - 1; // Simplified from (p*o - (1-p)) for mock
-        const kelly_f = edge / (odds - 1);
-        recommendedStake = currentBankroll * kelly_f * (kellyFraction || 0.25);
-    } else {
-        recommendedStake = 50;
-    }
-
-    return { recommendedStake: Math.max(0, Math.min(recommendedStake, currentBankroll)) };
-}
+    preferredStakingModel: 'Kelly Fraccionario', // 'Fijo', 'Porcentual'
+    kellyFraction: 0.25, // 1/4 Kelly. Only if preferredStakingModel is 'Kelly Fraccionario'
+    fixedStakeAmount: 50, // Only if preferredStakingModel is 'Fijo'
+    percentageStakeAmount: 2 // Only if preferredStakingModel is 'Porcentual'
+} as const;
 
 export function StakeCalculator({ stakeData, onBack }: { stakeData: { probability: number; odds: number; }, onBack: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [stake, setStake] = useState<number | null>(null);
   const [isBetRegistered, setIsBetRegistered] = useState(false);
+  const { toast } = useToast();
 
   const handleCalculateStake = async () => {
     setIsLoading(true);
-    const input = {
-      probability: stakeData.probability,
-      odds: stakeData.odds,
-      ...userData
-    };
-    const result = await runStakingCalculation(input);
-    setStake(result.recommendedStake);
-    setIsLoading(false);
+    try {
+      const input: StakingCalculatorInput = {
+        probability: stakeData.probability,
+        odds: stakeData.odds,
+        currentBankroll: userData.currentBankroll,
+        preferredStakingModel: userData.preferredStakingModel,
+        ...(userData.preferredStakingModel === 'Kelly Fraccionario' && { kellyFraction: userData.kellyFraction }),
+        ...(userData.preferredStakingModel === 'Fijo' && { fixedStakeAmount: userData.fixedStakeAmount }),
+        ...(userData.preferredStakingModel === 'Porcentual' && { percentageStakeAmount: userData.percentageStakeAmount }),
+      };
+      const result = await stakingCalculator(input);
+      setStake(result.recommendedStake);
+    } catch(error) {
+        console.error("Error calculating stake:", error);
+        toast({
+            variant: "destructive",
+            title: "Error al Calcular",
+            description: "No se pudo calcular el stake recomendado."
+        });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   const handleRegisterBet = async () => {
       setIsLoading(true);
-      // Here would be the server action to save the bet to Firestore
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsBetRegistered(true);
-      setIsLoading(false);
+      try {
+        // In a real app, this would be a server action to save the bet to Firestore.
+        // The action would take details like match, market, odds, stake, etc.
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setIsBetRegistered(true);
+        toast({
+            title: "Apuesta Registrada",
+            description: `Tu apuesta de $${stake?.toFixed(2)} ha sido guardada.`,
+            variant: "default"
+        });
+      } catch (error) {
+        console.error("Error registering bet:", error);
+        toast({
+            variant: "destructive",
+            title: "Error al Registrar",
+            description: "No se pudo guardar la apuesta en el historial."
+        });
+      } finally {
+        setIsLoading(false);
+      }
   }
 
   return (
@@ -98,7 +115,7 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
         )}
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={onBack} disabled={isLoading}>
+        <Button variant="outline" onClick={onBack} disabled={isLoading || isBetRegistered}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver
         </Button>
@@ -113,6 +130,11 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Registrar Apuesta
             </Button>
+        )}
+        {isBetRegistered && (
+             <Button onClick={onBack} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                Finalizar
+             </Button>
         )}
       </CardFooter>
     </div>
