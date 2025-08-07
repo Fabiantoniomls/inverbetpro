@@ -19,7 +19,7 @@ import { Label } from '../ui/label';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 
 
 // Custom renderer for tables to add ShadCN styling
@@ -216,8 +216,22 @@ export function ImageAnalysisUploader() {
         return;
     }
     try {
+        // Check for duplicates before saving
+        const analysesRef = collection(db, 'savedAnalyses');
+        const q = query(analysesRef, where('userId', '==', user.uid), where('content', '==', analysisText));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+            toast({
+                variant: "default",
+                title: "Análisis Duplicado",
+                description: "Este análisis ya ha sido guardado anteriormente.",
+            });
+            return;
+        }
+
         const titleMatch = analysisText.match(/Análisis Detallado de Apuestas de Valor - (.*?)\n/);
-        const newAnalysis: Omit<SavedAnalysis, 'id' | 'createdAt'> = {
+        const newAnalysis: Omit<SavedAnalysis, 'id' | 'createdAt' | 'userId'> & { userId: string } = {
             userId: user.uid,
             title: titleMatch ? titleMatch[1].trim() : `Análisis de ${surface || 'varios'}`,
             content: analysisText,

@@ -51,6 +51,7 @@ export type FundamentalAnalysisOutput = z.infer<typeof FundamentalAnalysisOutput
 
 export interface SavedAnalysis {
     id: string;
+    userId: string;
     title: string;
     content: string;
     createdAt: Date;
