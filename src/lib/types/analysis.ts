@@ -31,17 +31,16 @@ export const PickSchema = z.object({
   market: z.string(),
   selection: z.string(),
   odds: z.number(),
-  valueCalculated: z.number().optional(),
-  estimatedProbability: z.number().optional(),
-  stakeSuggestion: z.number().optional(),
-  confidenceScore: z.number().optional(),
-  note: z.string().optional(),
+  valueCalculated: z.number().optional().describe("El valor esperado (EV) calculado, como decimal (ej. 0.15 para 15%)."),
+  estimatedProbability: z.number().optional().describe("La probabilidad estimada por la IA, en porcentaje (ej. 58.5 para 58.5%)."),
+  confidenceScore: z.number().optional().describe("Puntuación de 1 a 10 sobre la confianza de la IA en su propio análisis."),
+  note: z.string().optional().describe("Una nota breve con los 2-3 factores clave que más influyeron en la decisión."),
 });
 export type Pick = z.infer<typeof PickSchema>;
 
 export const AnalyzeBatchFromImageOutputSchema = z.object({
     consolidatedAnalysis: z.string().describe("A single string containing the full, formatted markdown analysis for all matches."),
-    valuePicks: z.array(PickSchema).describe("An array of structured betting picks with positive value."),
+    valuePicks: z.array(PickSchema).describe("An array of structured betting picks with positive value, now including XAI fields."),
     extractedMatches: z.array(ExtractedMatchSchema).optional().describe("The raw data of matches extracted from the image."),
 });
 export type AnalyzeBatchFromImageOutput = z.infer<typeof AnalyzeBatchFromImageOutputSchema>;
