@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
 import type { Bet } from '@/lib/types';
 import { summarizeKpis, type KpiData } from '@/ai/flows/summarize-kpis';
+import { summarizePerformanceChart } from '@/ai/flows/summarize-performance-chart';
 import { useToast } from '@/hooks/use-toast';
 
 import { KpiCard } from "@/components/dashboard/kpi-card";
@@ -36,6 +37,7 @@ export default function DashboardPage() {
   const [bets, setBets] = useState<Bet[]>([]);
   const [loading, setLoading] = useState(true);
   const [kpiSummary, setKpiSummary] = useState<string | null>(null);
+  const [chartSummary, setChartSummary] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -91,6 +93,8 @@ export default function DashboardPage() {
     };
   }, [bets]);
 
+  const { format } = require('date-fns');
+
   const chartData: ChartData[] = useMemo(() => {
     const sortedBets = [...bets]
       .filter(b => b.status !== 'Pendiente')
@@ -103,12 +107,13 @@ export default function DashboardPage() {
         cumulativeProfit: cumulativeProfit
       };
     });
-  }, [bets]);
+  }, [bets, format]);
 
 
   useEffect(() => {
     if (!loading && bets.length > 0) {
-      const getSummary = async () => {
+      const getSummaries = async () => {
+        // KPI Summary
         try {
           const kpiPayload: KpiData = {
               totalProfitLoss: kpiData.totalProfitLoss,
@@ -123,10 +128,19 @@ export default function DashboardPage() {
            console.error("Error generating KPI summary:", error);
            // Do not show toast for this, as it's a non-critical enhancement
         }
+        
+        // Chart Summary
+        try {
+            const { summary: chartAnalysis } = await summarizePerformanceChart({ performanceData: chartData });
+            setChartSummary(chartAnalysis);
+        } catch (error) {
+            console.error("Error generating chart summary:", error);
+        }
+
       };
-      getSummary();
+      getSummaries();
     }
-  }, [loading, bets.length, kpiData]);
+  }, [loading, bets.length, kpiData, chartData]);
 
   if (loading) {
     return (
@@ -158,7 +172,7 @@ export default function DashboardPage() {
   }
 
   const recentBets = bets.slice(0, 5);
-  const { format } = require('date-fns');
+
 
   return (
     <div className="space-y-8">
@@ -183,7 +197,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <div className="lg:col-span-4">
-          <PerformanceChart data={chartData} />
+          <PerformanceChart data={chartData} analysis={chartSummary} />
         </div>
         <div className="lg:col-span-3">
             <Card>

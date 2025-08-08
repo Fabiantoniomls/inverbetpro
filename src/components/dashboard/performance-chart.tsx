@@ -9,10 +9,11 @@ export type ChartData = {
 }
 
 interface PerformanceChartProps {
-  data: ChartData[]
+  data: ChartData[];
+  analysis?: string | null;
 }
 
-export function PerformanceChart({ data }: PerformanceChartProps) {
+export function PerformanceChart({ data, analysis }: PerformanceChartProps) {
   if (data.length === 0) {
     return (
       <Card>
@@ -31,7 +32,9 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
     <Card>
       <CardHeader>
         <CardTitle>Rendimiento Histórico</CardTitle>
-        <CardDescription>Beneficio acumulado a lo largo del tiempo.</CardDescription>
+        <CardDescription>
+          {analysis || "Beneficio acumulado a lo largo del tiempo."}
+        </CardDescription>
       </CardHeader>
       <CardContent className="h-96">
         <ResponsiveContainer width="100%" height="100%">
