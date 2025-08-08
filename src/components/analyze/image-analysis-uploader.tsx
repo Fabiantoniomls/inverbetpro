@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useCallback } from 'react';
@@ -19,7 +20,7 @@ import { Label } from '../ui/label';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 
 
 // Custom renderer for tables to add ShadCN styling
@@ -219,10 +220,8 @@ export function ImageAnalysisUploader() {
     }
     setIsSaving(true);
     try {
-        const batch = writeBatch(db);
-        
-        // 1. Create the main analysis document
-        const analysisDocRef = doc(collection(db, 'savedAnalyses'));
+        // Step 1: Create the main analysis document
+        const analysesCollectionRef = collection(db, 'savedAnalyses');
         const title = matches?.[0]?.participants ? `${matches[0].participants}` + (matches.length > 1 ? ` y ${matches.length-1} más` : '') : `Análisis del ${new Date().toLocaleDateString()}`;
         const newAnalysisData = {
             userId: user.uid,
@@ -234,12 +233,13 @@ export function ImageAnalysisUploader() {
                 sport: matches?.[0]?.sport || 'Fútbol',
                 tournament: matches?.[0]?.tournament || '',
                 teams: matches?.[0]?.participants.split(' - ') || []
-            }
+            },
+            currentVersionId: '', // Will be updated
         };
-        batch.set(analysisDocRef, newAnalysisData);
+        const analysisDocRef = await addDoc(analysesCollectionRef, newAnalysisData);
 
-        // 2. Create the first version in the subcollection
-        const versionDocRef = doc(collection(db, `savedAnalyses/${analysisDocRef.id}/versions`));
+        // Step 2: Create the first version in the subcollection using the new analysis ID
+        const versionsCollectionRef = collection(db, 'savedAnalyses', analysisDocRef.id, 'versions');
         const newVersionData = {
             analysisId: analysisDocRef.id,
             author: "ai" as const,
@@ -249,13 +249,12 @@ export function ImageAnalysisUploader() {
             type: "original" as const,
             deleted: false,
         };
-        batch.set(versionDocRef, newVersionData);
-
-        // 3. Update the main doc with the currentVersionId
-        batch.update(analysisDocRef, { currentVersionId: versionDocRef.id });
-
-        // 4. Commit the batch
-        await batch.commit();
+        const versionDocRef = await addDoc(versionsCollectionRef, newVersionData);
+        
+        // Step 3: Update the main analysis doc with the ID of the first version
+        await updateDoc(analysisDocRef, {
+            currentVersionId: versionDocRef.id
+        });
         
         toast({
             title: "Análisis Guardado",
@@ -271,12 +270,13 @@ export function ImageAnalysisUploader() {
         toast({
             variant: "destructive",
             title: "Error al Guardar",
-            description: "No se pudo guardar el análisis."
+            description: "No se pudo guardar el análisis. Comprueba las reglas de seguridad de Firestore."
         });
     } finally {
       setIsSaving(false);
     }
   };
+
 
   const handleShareAnalysis = async (text: string) => {
       if (navigator.share) {
@@ -477,3 +477,5 @@ export function ImageAnalysisUploader() {
     </div>
   );
 }
+
+    
