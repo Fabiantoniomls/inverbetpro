@@ -12,7 +12,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { 
     ExtractedMatchSchema, 
     AnalyzeBatchFromImageInputSchema, 
@@ -85,7 +85,7 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
   Tu tarea es generar un informe de análisis y una lista estructurada de apuestas de valor.
 
   **PARTE 1: INFORME DE ANÁLISIS (Formato Markdown)**
-  Genera un informe en español con la siguiente estructura. NO incluyas la tabla de valor en este informe.
+  Genera un informe en español con la siguiente estructura. **IMPORTANTE: NO incluyas la tabla de valor en este informe de texto.**
   1.  **Análisis Detallado de Selecciones:**
       *   Para cada selección del cupón, presenta un análisis conciso pero potente.
       *   **Para Tenis:** Céntrate en el rendimiento en la superficie **{{{surface}}}**. Incluye datos clave como % de victorias en la superficie, H2H en la misma superficie, y estadísticas relevantes (ej. % de puntos ganados al servicio en {{{surface}}}).
