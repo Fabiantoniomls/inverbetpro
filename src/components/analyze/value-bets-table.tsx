@@ -1,18 +1,16 @@
+
 "use client"
 
 import * as React from "react"
 import {
   ColumnDef,
-  ColumnFiltersState,
   SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { Settings2 } from "lucide-react"
 
 import {
   Table,
@@ -26,7 +24,7 @@ import {
 import type { Pick } from "@/lib/types/analysis"
 import { DataTableColumnHeader } from "../history/data-table-column-header"
 import { Button } from "../ui/button"
-import { Settings2 } from "lucide-react"
+
 
 export const columns: ColumnDef<Pick>[] = [
   {
@@ -36,15 +34,10 @@ export const columns: ColumnDef<Pick>[] = [
       return (
         <div className="flex flex-col">
           <span className="font-medium max-w-[300px] truncate">{row.original.match}</span>
+           <span className="text-sm text-muted-foreground">{row.original.selection}</span>
         </div>
       )
     },
-    enableSorting: false,
-  },
-   {
-    accessorKey: "selection",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Selección" />,
-    cell: ({ row }) => row.original.selection,
     enableSorting: false,
   },
   {
@@ -63,12 +56,12 @@ export const columns: ColumnDef<Pick>[] = [
   },
     {
     accessorKey: "valueCalculated",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Valor Calculado" />,
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Valor Calculado (%)" />,
     cell: ({ row }) => {
         const value = row.original.valueCalculated;
         if (value === undefined) return '-';
         const color = value > 0 ? 'text-green-400' : 'text-red-400';
-        return <span className={color}>{value > 0 ? `+${(value * 100).toFixed(1)}%` : `${(value * 100).toFixed(1)}%`}</span>
+        return <span className={`font-bold ${color}`}>{value > 0 ? `+${(value * 100).toFixed(1)}%` : `${(value * 100).toFixed(1)}%`}</span>
     },
   },
 ]
@@ -158,5 +151,3 @@ export function ValueBetsTable({ data }: ValueBetsTableProps) {
     </div>
   )
 }
-
-    

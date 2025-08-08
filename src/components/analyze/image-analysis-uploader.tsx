@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
-import type { AnalyzeBatchFromImageOutput, ExtractedMatch, Pick } from '@/lib/types/analysis';
+import type { AnalyzeBatchFromImageOutput, ExtractedMatch } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -20,7 +20,7 @@ import { Label } from '../ui/label';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { ValueBetsTable } from './value-bets-table';
 
 
@@ -461,7 +461,3 @@ export function ImageAnalysisUploader() {
     </div>
   );
 }
-
-    
-
-    

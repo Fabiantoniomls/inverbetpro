@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -107,6 +108,7 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
   *   Para cada pick, extrae los siguientes campos: 'sport', 'match', 'market', 'selection', 'odds', 'estimatedProbability', 'valueCalculated'.
   *   'estimatedProbability' debe ser un número (ej. 58.5 para 58.5%).
   *   'valueCalculated' debe ser un número (ej. 0.15 para 15%).
+  *   'match' debe ser el campo 'participants' del JSON de entrada.
 
   Utiliza el siguiente JSON de selecciones para generar tu informe y tu lista JSON:
   {{{matchesJson}}}
@@ -163,5 +165,3 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
     };
   }
 );
-
-    
