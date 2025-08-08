@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
+import { deconstructArguments } from '@/ai/flows/deconstruct-arguments';
 import type { AnalyzeBatchFromImageOutput, ExtractedMatch, Pick } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '../ui/card';
@@ -164,7 +165,11 @@ export function ImageAnalysisUploader() {
     if (!result?.consolidatedAnalysis) return;
     setIsCounterAnalyzing(true);
     try {
-        const { counterAnalysis: newCounterResult } = await counterAnalysis({ originalAnalysis: result.consolidatedAnalysis, externalAnalysis: "Por favor, proporciona una segunda opinión crítica sobre este análisis." });
+        const deconstructedData = await deconstructArguments({
+            inverapuestasAnalysisText: result.consolidatedAnalysis,
+            externalAnalysisText: "Please provide a critical second opinion on this analysis.", // Placeholder for a real external analysis
+        });
+        const { counterAnalysis: newCounterResult } = await counterAnalysis(deconstructedData);
         setCounterResult(newCounterResult);
     } catch (error) {
         console.error('Error during counter-analysis:', error);

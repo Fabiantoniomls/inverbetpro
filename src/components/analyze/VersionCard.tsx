@@ -22,9 +22,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { deconstructArguments } from '@/ai/flows/deconstruct-arguments';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Timestamp, doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
@@ -61,9 +60,7 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [showCounterInput, setShowCounterInput] = useState(false);
     const [externalAnalysis, setExternalAnalysis] = useState('');
-    const [counterResult, setCounterResult] = useState<string | null>(null);
     const [extractedPicks, setExtractedPicks] = useState<Pick[] | null>(null);
-    const counterResultRef = useRef<HTMLDivElement>(null);
 
     const createdAtDate = version.createdAt instanceof Timestamp ? version.createdAt.toDate() : version.createdAt;
 
@@ -78,18 +75,20 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
         }
 
         setIsLoadingCounter(true);
-        setCounterResult(null);
         try {
-            const { counterAnalysis: result } = await counterAnalysis({ 
-                originalAnalysis: version.contentMarkdown,
-                externalAnalysis: externalAnalysis
+            // Step 1: Deconstruct both analyses into logical components
+            const deconstructedData = await deconstructArguments({
+                inverapuestasAnalysisText: version.contentMarkdown,
+                externalAnalysisText: externalAnalysis,
             });
 
-            // We need to extract picks from the new counter-analysis to save them
+            // Step 2: Pass the structured data to the counter-analysis flow
+            const { counterAnalysis: result } = await counterAnalysis(deconstructedData);
+
+            // Step 3: Extract picks from the new counter-analysis to save them
             const { picks } = await extractPicks({ analysisContent: result });
 
-
-            // Save this as a new version
+            // Step 4: Save this as a new version
              const versionsCollectionRef = collection(db, 'savedAnalyses', analysisId, 'versions');
              const newVersionData = {
                 analysisId: analysisId,
@@ -107,16 +106,17 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                 title: 'Contra-Análisis Guardado',
                 description: 'Se ha guardado una nueva versión con la opinión de "iaedge".',
             });
+            
+            // Reset state
             setShowCounterInput(false);
             setExternalAnalysis('');
-            setCounterResult(null); // The new version will appear automatically via the timeline listener
             
         } catch (error) {
             console.error("Error fetching counter-analysis:", error);
             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: 'No se pudo obtener la segunda opinión.',
+                description: 'No se pudo obtener la segunda opinión. Es posible que el texto sea demasiado largo o complejo.',
             });
         } finally {
             setIsLoadingCounter(false);
@@ -178,13 +178,6 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
         }
     };
 
-
-    useEffect(() => {
-        if (counterResult) {
-            counterResultRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [counterResult]);
-
     if (version.deleted) {
         return null;
     }
@@ -241,7 +234,7 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
 
                 {version.picks && version.picks.length > 0 && (
                     <div className="space-y-4">
-                        <h3 className="text-xl font-bold">Tabla de Apuestas de Valor</h3>
+                        <h3 className="text-lg font-semibold">Tabla de Apuestas de Valor</h3>
                         <ValueBetsTable data={version.picks} />
                     </div>
                 )}

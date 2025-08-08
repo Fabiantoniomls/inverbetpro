@@ -78,6 +78,12 @@ export const FundamentalAnalysisOutputSchema = z.object({
 export type FundamentalAnalysisOutput = z.infer<typeof FundamentalAnalysisOutputSchema>;
 
 
+// Schema for the structured deconstructed analysis output
+export const DeconstructedAnalysisSchema = z.object({
+    conclusion: z.string().describe("La predicción o tesis principal del análisis (ej. 'Victoria del Jugador A')."),
+    supportingPremises: z.array(z.string()).describe("Una lista de las razones, evidencias o argumentos clave que se presentan para apoyar la conclusión."),
+    counterargumentsOrRisks: z.array(z.string()).describe("Una lista de los riesgos, debilidades o contraargumentos mencionados en el análisis."),
+});
 
 
 // Represents the main analysis "project" document
