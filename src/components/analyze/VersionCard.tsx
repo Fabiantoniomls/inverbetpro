@@ -3,13 +3,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { AnalysisVersion } from '@/lib/types/analysis';
+import type { AnalysisVersion, Pick } from '@/lib/types/analysis';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
-import { Trash2, Bot, Loader2, ChevronsUpDown } from 'lucide-react';
+import { Trash2, Bot, Loader2, ChevronsUpDown, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -28,6 +28,8 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Timestamp } from 'firebase/firestore';
+import { extractPicks } from '@/ai/flows/extract-picks';
+import { ExtractPicksModal } from './ExtractPicksModal';
 
 
 // Custom renderer for tables to add ShadCN styling
@@ -68,9 +70,11 @@ interface VersionCardProps {
 export function VersionCard({ version, analysisId }: VersionCardProps) {
     const { toast } = useToast();
     const [isLoadingCounter, setIsLoadingCounter] = useState(false);
+    const [isLoadingPicks, setIsLoadingPicks] = useState(false);
     const [showCounterInput, setShowCounterInput] = useState(false);
     const [externalAnalysis, setExternalAnalysis] = useState('');
     const [counterResult, setCounterResult] = useState<string | null>(null);
+    const [extractedPicks, setExtractedPicks] = useState<Pick[] | null>(null);
     const counterResultRef = useRef<HTMLDivElement>(null);
 
     const { introduction, detailedAnalysis, valueTableAndRecs } = getAnalysisParts(version.contentMarkdown);
@@ -107,6 +111,32 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
         }
     };
     
+    const handleExtractPicks = async () => {
+        setIsLoadingPicks(true);
+        setExtractedPicks(null);
+        try {
+            const { picks } = await extractPicks({ analysisContent: version.contentMarkdown });
+            if (picks && picks.length > 0) {
+                setExtractedPicks(picks);
+            } else {
+                toast({
+                    title: 'No se encontraron picks',
+                    description: 'La IA no pudo identificar apuestas concretas en este análisis.',
+                });
+            }
+        } catch (error) {
+             console.error("Error extracting picks:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error de Extracción',
+                description: 'No se pudieron extraer los picks del análisis.',
+            });
+        } finally {
+            setIsLoadingPicks(false);
+        }
+    }
+
+
     useEffect(() => {
         if (counterResult) {
             counterResultRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -114,6 +144,14 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
     }, [counterResult]);
 
     return (
+        <>
+        {extractedPicks && (
+            <ExtractPicksModal
+                isOpen={!!extractedPicks}
+                onClose={() => setExtractedPicks(null)}
+                picks={extractedPicks}
+            />
+        )}
         <Card className="border-border/80">
             <CardHeader>
                 <CardTitle className="text-lg">Versión del Análisis ({version.type})</CardTitle>
@@ -205,7 +243,15 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                 )}
             </CardContent>
             <CardFooter className="flex-wrap gap-2">
-                <AlertDialog>
+                 <Button onClick={handleExtractPicks} size="sm" disabled={isLoadingPicks}>
+                    {isLoadingPicks ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Send className="mr-2 h-4 w-4" />
+                    )}
+                    Extraer Picks
+                 </Button>
+                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm" disabled={version.type === 'original'}>
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -229,5 +275,6 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                 </AlertDialog>
             </CardFooter>
         </Card>
+        </>
     );
 }

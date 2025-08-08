@@ -51,16 +51,19 @@ export const FundamentalAnalysisOutputSchema = z.object({
 export type FundamentalAnalysisOutput = z.infer<typeof FundamentalAnalysisOutputSchema>;
 
 
-export type Pick = {
-  market: string;
-  selection: string;
-  price: number; // cuota
-  impliedProb?: number;
-  edge?: number; // +EV estimate
-  stakeSuggestion?: number; // unidades
-  confidenceScore?: number; // 0-1
-  note?: string;
-};
+export const PickSchema = z.object({
+  sport: z.enum(['Fútbol', 'Tenis']),
+  match: z.string(),
+  market: z.string(),
+  selection: z.string(),
+  odds: z.number(),
+  valueCalculated: z.number().optional(),
+  estimatedProbability: z.number().optional(),
+  stakeSuggestion: z.number().optional(),
+  confidenceScore: z.number().optional(),
+  note: z.string().optional(),
+});
+export type Pick = z.infer<typeof PickSchema>;
 
 // Represents the main analysis "project" document
 export interface SavedAnalysis {
@@ -68,17 +71,16 @@ export interface SavedAnalysis {
     userId: string;
     title: string;
     createdAt: Date | Timestamp;
-    // Optional metadata for the event
     metadata?: {
         sport: 'Fútbol' | 'Tenis';
         tournament?: string;
         teams?: string[];
         eventDate?: Date;
     };
-    currentVersionId?: string; // Points to the latest or most relevant version
+    currentVersionId?: string;
     deleted?: boolean;
     visibility?: "private" | "public";
-    versions?: AnalysisVersion[]; // To hold versions fetched from subcollection
+    versions?: AnalysisVersion[];
 }
 
 // Represents a single version document within the 'versions' subcollection
