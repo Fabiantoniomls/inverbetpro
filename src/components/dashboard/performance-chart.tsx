@@ -13,6 +13,20 @@ interface PerformanceChartProps {
 }
 
 export function PerformanceChart({ data }: PerformanceChartProps) {
+  if (data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Rendimiento Histórico</CardTitle>
+          <CardDescription>Beneficio acumulado a lo largo del tiempo.</CardDescription>
+        </CardHeader>
+        <CardContent className="h-96 flex items-center justify-center">
+            <p className="text-muted-foreground">No hay datos suficientes para mostrar el gráfico.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -43,6 +57,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
               fontSize={12}
               tickLine={false}
               axisLine={false}
+              interval="preserveStartEnd"
             />
             <YAxis 
               stroke="hsl(var(--muted-foreground))"
@@ -59,6 +74,7 @@ export function PerformanceChart({ data }: PerformanceChartProps) {
               }}
               labelStyle={{ color: 'hsl(var(--foreground))' }}
               itemStyle={{ color: 'hsl(var(--primary))' }}
+              formatter={(value: number) => [`$${value.toFixed(2)}`, "Beneficio"]}
             />
             <Area 
               type="monotone" 
