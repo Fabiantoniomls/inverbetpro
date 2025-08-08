@@ -48,21 +48,6 @@ function MarkdownTd({ children }: { children: React.ReactNode }) { return <td cl
 
 const markdownComponents = { table: MarkdownTable, thead: MarkdownTHead, tr: MarkdownTr, th: MarkdownTh, td: MarkdownTd };
 
-// Function to split the analysis content
-const getAnalysisParts = (content: string) => {
-    const detailedAnalysisRegex = /(### Análisis Detallado de Selecciones[\s\S]*?)(?=### Conclusiones Rápidas|### TABLA DE APUESTAS DE VALOR)/;
-    const valueTableAndRecsRegex = /(### TABLA DE APUESTAS DE VALOR[\s\S]*)/;
-    
-    const detailedMatch = content.match(detailedAnalysisRegex);
-    const valueTableAndRecsMatch = content.match(valueTableAndRecsRegex);
-
-    return {
-        introduction: content.split('###')[0],
-        detailedAnalysis: detailedMatch ? detailedMatch[1] : '',
-        valueTableAndRecs: valueTableAndRecsMatch ? valueTableAndRecsMatch[1] : ''
-    };
-};
-
 interface VersionCardProps {
     version: AnalysisVersion;
     analysisId: string;
@@ -79,7 +64,6 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
     const [extractedPicks, setExtractedPicks] = useState<Pick[] | null>(null);
     const counterResultRef = useRef<HTMLDivElement>(null);
 
-    const { introduction, detailedAnalysis, valueTableAndRecs } = getAnalysisParts(version.contentMarkdown);
     const createdAtDate = version.createdAt instanceof Timestamp ? version.createdAt.toDate() : version.createdAt;
 
     const handleGenerateCounterAnalysis = async () => {
@@ -167,7 +151,7 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
             });
             toast({
                 title: 'Versión Eliminada',
-                description: 'La versión del análisis ha sido eliminada (soft delete).',
+                description: 'La versión del análisis ha sido eliminada.',
             });
             // The timeline will update automatically
         } catch (error) {
@@ -223,7 +207,7 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                         <AlertDialogHeader>
                           <AlertDialogTitle>¿Eliminar esta versión?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Esta acción marcará la versión como eliminada (no se podrá deshacer). La versión original de un análisis no puede ser eliminada.
+                            Esta acción marcará la versión como eliminada. La versión original de un análisis no puede ser eliminada.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
