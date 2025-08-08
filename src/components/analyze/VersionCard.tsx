@@ -150,6 +150,8 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                 isOpen={!!extractedPicks}
                 onClose={() => setExtractedPicks(null)}
                 picks={extractedPicks}
+                analysisId={analysisId}
+                versionId={version.id}
             />
         )}
         <Card className="border-border/80">

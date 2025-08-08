@@ -24,6 +24,10 @@ export interface Bet {
   estimatedProbability: number;
   profitOrLoss: number;
   createdAt: Date;
+  source?: {
+    analysisId: string;
+    versionId: string;
+  };
 }
 
 // Represents the main analysis "project" document
