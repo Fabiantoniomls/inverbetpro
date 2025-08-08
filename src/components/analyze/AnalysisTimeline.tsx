@@ -6,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { VersionCard } from "./VersionCard";
 import type { AnalysisVersion } from "@/lib/types/analysis";
 import { Skeleton } from "../ui/skeleton";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ShieldAlert } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 
 export default function AnalysisTimeline({ analysisId }: { analysisId: string }) {
@@ -22,13 +22,22 @@ export default function AnalysisTimeline({ analysisId }: { analysisId: string })
     </div>
   );
   
-  if (error) return (
-    <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error al Cargar Versiones</AlertTitle>
-        <AlertDescription>{error.message}</AlertDescription>
-    </Alert>
-  );
+  if (error) {
+    const isPermissionError = (error as any).code === 'permission-denied';
+    return (
+        <Alert variant="destructive">
+            {isPermissionError ? <ShieldAlert className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+            <AlertTitle>{isPermissionError ? 'Error de Permisos' : 'Error al Cargar Versiones'}</AlertTitle>
+            <AlertDescription>
+              {isPermissionError 
+                ? "No se pudieron cargar las versiones de este análisis. Revisa las reglas de seguridad de tu base de datos Firestore para asegurar que se permite la lectura de la subcolección 'versions'."
+                : error.message
+              }
+            </AlertDescription>
+        </Alert>
+    );
+  }
+
 
   if (snapshot?.empty) return (
     <Alert>
