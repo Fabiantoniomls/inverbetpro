@@ -50,12 +50,24 @@ export const FundamentalAnalysisOutputSchema = z.object({
 });
 export type FundamentalAnalysisOutput = z.infer<typeof FundamentalAnalysisOutputSchema>;
 
+
+export type Pick = {
+  market: string;
+  selection: string;
+  price: number; // cuota
+  impliedProb?: number;
+  edge?: number; // +EV estimate
+  stakeSuggestion?: number; // unidades
+  confidenceScore?: number; // 0-1
+  note?: string;
+};
+
 // Represents the main analysis "project" document
 export interface SavedAnalysis {
     id: string;
     userId: string;
     title: string;
-    createdAt: Date;
+    createdAt: Date | Timestamp;
     // Optional metadata for the event
     metadata?: {
         sport: 'Fútbol' | 'Tenis';
@@ -71,17 +83,16 @@ export interface SavedAnalysis {
 
 // Represents a single version document within the 'versions' subcollection
 export interface AnalysisVersion {
-    id: string; // Firestore document ID
-    analysisId: string; // Back-reference to the parent SavedAnalysis doc
+    id: string;
+    analysisId: string;
     author: "user" | "ai" | "external";
-    authorId?: string; // Optional: user ID if author is 'user'
+    authorId?: string;
     contentMarkdown: string;
     createdAt: Date | Timestamp;
     type: "original" | "interpelacion" | "postmortem" | "edit";
-    // Optional fields based on vision
-    picks?: any[]; 
-    linkedEvents?: any[];
-    aiMeta?: any;
+    picks?: Pick[];
+    linkedEvents?: Array<{ eventId: string; result?: "win"|"lose"|"push"; finalScore?: string }>;
+    aiMeta?: { model: string; promptSnapshot?: string; flowId?: string };
     deleted?: boolean;
     postmortem?: {
         summary: string;
