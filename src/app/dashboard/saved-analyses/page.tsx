@@ -88,7 +88,7 @@ export default function SavedAnalysesPage() {
 
         setLoading(true);
         const analysesRef = collection(db, 'savedAnalyses');
-        const q = query(analysesRef, where('userId', '==', user.uid), where('deleted', '!=', true), orderBy('createdAt', 'desc'));
+        const q = query(analysesRef, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
 
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const analysesData = querySnapshot.docs.map(doc => {
