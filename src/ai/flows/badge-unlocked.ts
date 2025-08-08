@@ -16,7 +16,8 @@ const BadgeUnlockedInputSchema = z.object({
 export type BadgeUnlockedInput = z.infer<typeof BadgeUnlockedInputSchema>;
 
 const BadgeUnlockedOutputSchema = z.object({
-    congratulatoryMessage: z.string().describe("A personalized message that congratulates the user and explains the value of their achievement."),
+    title: z.string().describe("A celebratory title for the notification or modal (e.g., '¡Logro Desbloqueado!')."),
+    body: z.string().describe("A message of 2-3 sentences that congratulates the user, reinforces the habit, and encourages them to continue."),
 });
 export type BadgeUnlockedOutput = z.infer<typeof BadgeUnlockedOutputSchema>;
 
@@ -30,13 +31,16 @@ const badgeUnlockedPrompt = ai.definePrompt({
   name: 'badgeUnlockedPrompt',
   input: { schema: BadgeUnlockedInputSchema },
   output: { schema: BadgeUnlockedOutputSchema },
-  prompt: `Eres un mentor y coach de inversiones deportivas. Un usuario acaba de desbloquear un logro ("insignia") en la aplicación. Tu tarea es generar un mensaje de felicitación (2-3 frases) que no solo celebre el logro, sino que también refuerce positivamente el hábito subyacente, explicando su importancia para el éxito a largo plazo como inversor.
+  prompt: `Eres el sistema de recompensas de la aplicación de inversión Inverapuestas Pro. Un usuario acaba de desbloquear un logro. Basado en el nombre y la descripción del logro, genera un mensaje de felicitación para una notificación o un modal. El mensaje debe tener:
 
-**Detalles de la Insignia Desbloqueada:**
+1.  Un título de celebración (ej. "¡Logro Desbloqueado!").
+2.  Un cuerpo de 2-3 frases que felicite al usuario, refuerce la importancia del hábito que representa esa insignia y le anime a continuar.
+
+Usa un tono positivo y de empoderamiento.
+
+Detalles del Logro:
 - **Nombre de la Insignia:** {{{badgeName}}}
-- **Razón del Logro:** {{{badgeDescription}}}
-
-Genera ahora el mensaje de felicitación y refuerzo.
+- **Descripción:** {{{badgeDescription}}}
 `,
     config: {
       temperature: 0.4
