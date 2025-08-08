@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, where, orderBy } from "firebase/firestore";
+import { collection, query, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { VersionCard } from "./VersionCard";
 import type { AnalysisVersion } from "@/lib/types/analysis";
@@ -11,8 +11,9 @@ import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 
 export default function AnalysisTimeline({ analysisId }: { analysisId: string }) {
   const versionsRef = collection(db, 'savedAnalyses', analysisId, 'versions');
-  // Consulta simple para obtener versiones no eliminadas. El orden se manejará en el cliente.
-  const q = query(versionsRef, where('deleted', '!=', true));
+  // Consulta simple para obtener versiones. El filtrado y orden se manejarán en el cliente
+  // para cumplir con las reglas de seguridad de Firestore que no pueden hacer lookups de documentos padres.
+  const q = query(versionsRef, orderBy("createdAt", "asc"));
   const [snapshot, loading, error] = useCollection(q);
 
   if (loading) return (
@@ -46,15 +47,26 @@ export default function AnalysisTimeline({ analysisId }: { analysisId: string })
     </Alert>
   );
 
-  // Ordenamos las versiones por fecha de creación en el lado del cliente.
-  // Esto evita la necesidad de un índice compuesto en Firestore y simplifica las reglas.
+  // Filtramos y ordenamos las versiones en el lado del cliente.
   const versions = snapshot?.docs
     .map(d => ({ id: d.id, ...d.data() } as AnalysisVersion))
+    .filter(v => !v.deleted) // Filtrar las eliminadas en el cliente
     .sort((a, b) => {
         const dateA = (a.createdAt as any)?.toDate ? (a.createdAt as any).toDate() : new Date(0);
         const dateB = (b.createdAt as any)?.toDate ? (b.createdAt as any).toDate() : new Date(0);
         return dateA.getTime() - dateB.getTime();
     });
+    
+  if (versions.length === 0) {
+     return (
+        <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Sin Versiones Visibles</AlertTitle>
+            <AlertDescription>Este proyecto de análisis no tiene versiones visibles.</AlertDescription>
+        </Alert>
+      );
+  }
+
 
   return (
     <div className="space-y-4">
