@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for the 'savedAnalyses' collection
+    match /savedAnalyses/{analysisId} {
+      allow read, create, update, delete: if isSignedIn() && isOwner(request.auth.uid);
+
+      // Rules for the 'versions' subcollection
+      // This rule allows a user to read/write to a version if they own the parent analysis document.
+      match /versions/{versionId} {
+        allow read, write: if isSignedIn() && request.auth.uid == get(/databases/$(database)/documents/savedAnalyses/$(analysisId)).data.userId;
+      }
+    }
+
+    // Rules for the 'bets' collection
+    match /bets/{betId} {
+        // Users can read/write bets if they are the owner based on the data in the document
+        allow read, update, delete: if isSignedIn() && isOwner(resource.data.userId);
+        // Users can create a bet if the incoming data's userId matches their own UID
+        allow create: if isSignedIn() && isOwner(request.resource.data.userId);
+    }
+
+    // Rules for the 'userSettings' collection and 'staking' subcollection
+    match /userSettings/{userId}/staking/{settingId} {
+        // A user can only read and write their OWN staking configuration document.
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}
