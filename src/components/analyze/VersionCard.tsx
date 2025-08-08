@@ -223,7 +223,7 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                         <AlertDialogHeader>
                           <AlertDialogTitle>¿Eliminar esta versión?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Esta acción no se puede deshacer (marcará la versión como eliminada). La versión original no puede ser eliminada.
+                            Esta acción marcará la versión como eliminada (no se podrá deshacer). La versión original de un análisis no puede ser eliminada.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
