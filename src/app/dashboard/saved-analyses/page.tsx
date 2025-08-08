@@ -3,13 +3,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { SavedAnalysis, AnalysisVersion } from '@/lib/types/analysis';
+import type { SavedAnalysis } from '@/lib/types/analysis';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
-import { Trash2, Bot, Loader2, ChevronsUpDown } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -22,45 +20,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { counterAnalysis } from '@/ai/flows/counter-analysis';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, getDocs, Timestamp, writeBatch } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, getDocs, Timestamp, writeBatch } from 'firebase/firestore';
+import AnalysisTimeline from '@/components/analyze/AnalysisTimeline';
 
-
-// Custom renderer for tables to add ShadCN styling
-function MarkdownTable({ children }: { children: React.ReactNode }) {
-    return (
-        <div className="overflow-x-auto rounded-lg border my-4">
-            <table className="min-w-full divide-y divide-border">{children}</table>
-        </div>
-    );
-}
-function MarkdownTHead({ children }: { children: React.ReactNode }) { return <thead className="bg-muted/50">{children}</thead>; }
-function MarkdownTr({ children }: { children: React.ReactNode }) { return <tr className="hover:bg-muted/50">{children}</tr>; }
-function MarkdownTh({ children }: { children: React.ReactNode }) { return <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{children}</th>; }
-function MarkdownTd({ children }: { children: React.ReactNode }) { return <td className="px-4 py-3 whitespace-nowrap text-sm">{children}</td>; }
-
-const markdownComponents = { table: MarkdownTable, thead: MarkdownTHead, tr: MarkdownTr, th: MarkdownTh, td: MarkdownTd };
-
-// Function to split the analysis content
-const getAnalysisParts = (content: string) => {
-    const detailedAnalysisRegex = /(### Análisis Detallado de Selecciones[\s\S]*?)(?=### Conclusiones Rápidas|### TABLA DE APUESTAS DE VALOR)/;
-    const valueTableAndRecsRegex = /(### TABLA DE APUESTAS DE VALOR[\s\S]*)/;
-    
-    const detailedMatch = content.match(detailedAnalysisRegex);
-    const valueTableAndRecsMatch = content.match(valueTableAndRecsRegex);
-
-    return {
-        introduction: content.split('###')[0],
-        detailedAnalysis: detailedMatch ? detailedMatch[1] : '',
-        valueTableAndRecs: valueTableAndRecsMatch ? valueTableAndRecsMatch[1] : ''
-    };
-};
 
 interface AnalysisCardProps {
     analysis: SavedAnalysis;
@@ -68,57 +32,7 @@ interface AnalysisCardProps {
 }
 
 function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
-    const { toast } = useToast();
-    const [isLoadingCounter, setIsLoadingCounter] = useState(false);
-    const [showCounterInput, setShowCounterInput] = useState(false);
-    const [externalAnalysis, setExternalAnalysis] = useState('');
-    const [counterResult, setCounterResult] = useState<string | null>(null);
-    const counterResultRef = useRef<HTMLDivElement>(null);
-    
-    // We get the first version to display. In the future this will be a timeline.
-    const firstVersion = analysis.versions?.[0];
-    if (!firstVersion) return null; // Don't render card if there are no versions
-
-    const { introduction, detailedAnalysis, valueTableAndRecs } = getAnalysisParts(firstVersion.contentMarkdown);
     const createdAtDate = analysis.createdAt instanceof Timestamp ? analysis.createdAt.toDate() : analysis.createdAt;
-
-
-    const handleGenerateCounterAnalysis = async () => {
-        if (!externalAnalysis.trim()) {
-            toast({
-                variant: 'destructive',
-                title: 'Texto requerido',
-                description: 'Por favor, pega el análisis externo en el área de texto.',
-            });
-            return;
-        }
-
-        setIsLoadingCounter(true);
-        setCounterResult(null);
-        try {
-            const { counterAnalysis: result } = await counterAnalysis({ 
-                originalAnalysis: firstVersion.contentMarkdown,
-                externalAnalysis: externalAnalysis
-            });
-            setCounterResult(result);
-            // Here you would create a new version in Firestore in a real scenario
-        } catch (error) {
-            console.error("Error fetching counter-analysis:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'No se pudo obtener la segunda opinión.',
-            });
-        } finally {
-            setIsLoadingCounter(false);
-        }
-    };
-    
-    useEffect(() => {
-        if (counterResult) {
-            counterResultRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [counterResult]);
 
     return (
         <Card>
@@ -128,103 +42,20 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
                     Creado el {createdAtDate ? format(createdAtDate, "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es }) : 'fecha desconocida'}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                    {introduction}
-                </ReactMarkdown>
-                
-                <div className="py-4">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                        {valueTableAndRecs}
-                    </ReactMarkdown>
-                </div>
-                
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1" className="border-none -mt-4">
-                        <AccordionTrigger className="text-sm text-primary hover:no-underline justify-start gap-1 py-2">
-                            <span>Ver Análisis Completo</span>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                {detailedAnalysis}
-                            </ReactMarkdown>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-                
-                <div className="mt-6 border-t pt-4">
-                    {!showCounterInput && (
-                         <Button onClick={() => setShowCounterInput(true)} variant="outline" size="sm">
-                            <ChevronsUpDown className="mr-2 h-4 w-4" />
-                            Contrastar con Análisis Externo
-                        </Button>
-                    )}
-
-                    {showCounterInput && !counterResult && (
-                        <div className="space-y-4">
-                             <Label htmlFor={`external-analysis-${analysis.id}`}>Pega aquí el análisis de otra fuente para obtener una respuesta crítica de "iaedge"</Label>
-                             <Textarea 
-                                id={`external-analysis-${analysis.id}`}
-                                value={externalAnalysis}
-                                onChange={(e) => setExternalAnalysis(e.target.value)}
-                                placeholder="Pega el texto del análisis externo aquí..."
-                                rows={8}
-                                className="text-xs"
-                             />
-                             <div className="flex gap-2">
-                                <Button onClick={handleGenerateCounterAnalysis} disabled={isLoadingCounter} size="sm">
-                                    {isLoadingCounter ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Bot className="mr-2 h-4 w-4" />
-                                    )}
-                                    Generar Contra-Análisis
-                                </Button>
-                                <Button onClick={() => setShowCounterInput(false)} variant="ghost" size="sm" disabled={isLoadingCounter}>Cancelar</Button>
-                             </div>
-                        </div>
-                    )}
-                </div>
-
-
-                {isLoadingCounter && !counterResult && (
-                     <div className="space-y-4 pt-4">
-                        <div className="flex items-center gap-2 text-primary">
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            <p className="text-sm font-medium">"iaedge" está contrastando ambos análisis...</p>
-                        </div>
-                        <Skeleton className="h-32 w-full" />
-                    </div>
-                )}
-                
-                {counterResult && (
-                    <div className="space-y-4 pt-6 border-t mt-4" ref={counterResultRef}>
-                        <Alert variant="default" className="border-blue-500 bg-blue-500/10">
-                           <Bot className="h-4 w-4 text-blue-500" />
-                           <AlertTitle>Síntesis y Contra-Análisis por iaedge</AlertTitle>
-                           <AlertDescription>
-                               Se ha combinado tu análisis guardado con la información externa proporcionada.
-                           </AlertDescription>
-                       </Alert>
-                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                           {counterResult}
-                       </ReactMarkdown>
-                   </div>
-                )}
-
-
+            <CardContent>
+                <AnalysisTimeline analysisId={analysis.id} />
             </CardContent>
-            <CardFooter className="flex-wrap gap-2">
-                <AlertDialog>
+            <CardFooter>
+                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive" size="sm">
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Eliminar
+                        Eliminar Proyecto
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                      <AlertDialogTitle>¿Estás seguro de eliminar todo el proyecto?</AlertDialogTitle>
                       <AlertDialogDescription>
                         Esta acción no se puede deshacer. Esto eliminará permanentemente el análisis y todas sus versiones.
                       </AlertDialogDescription>
@@ -259,32 +90,14 @@ export default function SavedAnalysesPage() {
         const analysesRef = collection(db, 'savedAnalyses');
         const q = query(analysesRef, where('userId', '==', user.uid), where('deleted', '!=', true), orderBy('createdAt', 'desc'));
 
-        const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-            const analysesData: SavedAnalysis[] = [];
-            
-            for (const doc of querySnapshot.docs) {
-                const analysis = {
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const analysesData = querySnapshot.docs.map(doc => {
+                return {
                     id: doc.id,
                     ...doc.data(),
                     createdAt: (doc.data().createdAt as Timestamp)?.toDate() ?? new Date(),
                 } as SavedAnalysis;
-                
-                // Fetch versions subcollection for each analysis
-                const versionsRef = collection(db, 'savedAnalyses', doc.id, 'versions');
-                const versionsQuery = query(versionsRef, orderBy('createdAt', 'asc'));
-                const versionsSnapshot = await getDocs(versionsQuery);
-                analysis.versions = versionsSnapshot.docs.map(versionDoc => {
-                   const versionData = versionDoc.data();
-                   return {
-                       id: versionDoc.id,
-                       ...versionData,
-                       createdAt: (versionData.createdAt as Timestamp)?.toDate() ?? new Date(),
-                   } as AnalysisVersion
-                });
-
-                analysesData.push(analysis);
-            }
-            
+            });
             setAnalyses(analysesData);
             setLoading(false);
         }, (error) => {
@@ -398,5 +211,3 @@ export default function SavedAnalysesPage() {
         </div>
     );
 }
-
-    
