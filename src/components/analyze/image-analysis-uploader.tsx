@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
-import type { AnalyzeBatchFromImageOutput, ExtractedMatch, SavedAnalysis } from '@/lib/types/analysis';
+import type { AnalyzeBatchFromImageOutput, ExtractedMatch, SavedAnalysis, AnalysisVersion } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -19,7 +19,7 @@ import { Label } from '../ui/label';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 
 
 // Custom renderer for tables to add ShadCN styling
@@ -67,6 +67,7 @@ export function ImageAnalysisUploader() {
   const [surface, setSurface] = useState<Surface | null>(null);
   
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isCounterAnalyzing, setIsCounterAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalyzeBatchFromImageOutput | null>(null);
   const [counterResult, setCounterResult] = useState<string | null>(null);
@@ -181,6 +182,7 @@ export function ImageAnalysisUploader() {
     setResult(null);
     setCounterResult(null);
     setIsLoading(false);
+    setIsSaving(false);
     setIsCounterAnalyzing(false);
   }
 
@@ -210,27 +212,54 @@ export function ImageAnalysisUploader() {
     });
   }
 
-  const handleSaveAnalysis = async (analysisText: string, surface: string | null) => {
+  const handleSaveAnalysis = async (analysisText: string, matches: ExtractedMatch[] | null) => {
     if (!analysisText || !user) {
         toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para guardar un análisis.' });
         return;
     }
+    setIsSaving(true);
     try {
-        const titleMatch = analysisText.match(/Análisis Detallado de Apuestas de Valor - (.*?)\n/);
-        const newAnalysis: Omit<SavedAnalysis, 'id' | 'createdAt' | 'userId'> & { userId: string } = {
+        const batch = writeBatch(db);
+        
+        // 1. Create the main analysis document
+        const analysisDocRef = doc(collection(db, 'savedAnalyses'));
+        const title = matches?.[0]?.participants ? `${matches[0].participants}` + (matches.length > 1 ? ` y ${matches.length-1} más` : '') : `Análisis del ${new Date().toLocaleDateString()}`;
+        const newAnalysisData = {
             userId: user.uid,
-            title: titleMatch ? titleMatch[1].trim() : `Análisis de ${surface || 'varios'}`,
-            content: analysisText,
-        };
-
-        await addDoc(collection(db, 'savedAnalyses'), {
-            ...newAnalysis,
+            title: title,
             createdAt: serverTimestamp(),
-        });
+            visibility: "private" as const,
+            deleted: false,
+            metadata: {
+                sport: matches?.[0]?.sport || 'Fútbol',
+                tournament: matches?.[0]?.tournament || '',
+                teams: matches?.[0]?.participants.split(' - ') || []
+            }
+        };
+        batch.set(analysisDocRef, newAnalysisData);
+
+        // 2. Create the first version in the subcollection
+        const versionDocRef = doc(collection(db, `savedAnalyses/${analysisDocRef.id}/versions`));
+        const newVersionData = {
+            analysisId: analysisDocRef.id,
+            author: "ai" as const,
+            authorId: 'inverapuestas-pro-model',
+            contentMarkdown: analysisText,
+            createdAt: serverTimestamp(),
+            type: "original" as const,
+            deleted: false,
+        };
+        batch.set(versionDocRef, newVersionData);
+
+        // 3. Update the main doc with the currentVersionId
+        batch.update(analysisDocRef, { currentVersionId: versionDocRef.id });
+
+        // 4. Commit the batch
+        await batch.commit();
         
         toast({
             title: "Análisis Guardado",
-            description: "Tu análisis ha sido guardado en Firestore.",
+            description: "Tu análisis ha sido guardado como un nuevo proyecto.",
             action: (
               <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/saved-analyses')}>
                 Ver Análisis
@@ -244,6 +273,8 @@ export function ImageAnalysisUploader() {
             title: "Error al Guardar",
             description: "No se pudo guardar el análisis."
         });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -273,8 +304,8 @@ export function ImageAnalysisUploader() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Analizar otra Imagen
         </Button>
-        <Button variant="outline" onClick={() => handleSaveAnalysis(analysisText, surface)}>
-            <Save className="mr-2 h-4 w-4" />
+        <Button variant="outline" onClick={() => handleSaveAnalysis(analysisText, extractedMatches)} disabled={isSaving}>
+            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Guardar Análisis
         </Button>
         <Button variant="outline" onClick={() => handleCopyToClipboard(analysisText)}>

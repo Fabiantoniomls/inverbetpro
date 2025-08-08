@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { SavedAnalysis } from '@/lib/types';
+import type { SavedAnalysis, AnalysisVersion } from '@/lib/types/analysis';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
@@ -29,7 +29,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, getDocs, Timestamp, collectionGroup, writeBatch } from 'firebase/firestore';
 
 
 // Custom renderer for tables to add ShadCN styling
@@ -74,7 +74,14 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
     const [externalAnalysis, setExternalAnalysis] = useState('');
     const [counterResult, setCounterResult] = useState<string | null>(null);
     const counterResultRef = useRef<HTMLDivElement>(null);
-    const { introduction, detailedAnalysis, valueTableAndRecs } = getAnalysisParts(analysis.content);
+    
+    // We get the first version to display. In the future this will be a timeline.
+    const firstVersion = analysis.versions?.[0];
+    if (!firstVersion) return null; // Don't render card if there are no versions
+
+    const { introduction, detailedAnalysis, valueTableAndRecs } = getAnalysisParts(firstVersion.contentMarkdown);
+    const createdAtDate = firstVersion.createdAt instanceof Timestamp ? firstVersion.createdAt.toDate() : firstVersion.createdAt;
+
 
     const handleGenerateCounterAnalysis = async () => {
         if (!externalAnalysis.trim()) {
@@ -90,10 +97,11 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
         setCounterResult(null);
         try {
             const { counterAnalysis: result } = await counterAnalysis({ 
-                originalAnalysis: analysis.content,
+                originalAnalysis: firstVersion.contentMarkdown,
                 externalAnalysis: externalAnalysis
             });
             setCounterResult(result);
+            // Here you would create a new version in Firestore in a real scenario
         } catch (error) {
             console.error("Error fetching counter-analysis:", error);
             toast({
@@ -117,7 +125,7 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
             <CardHeader>
                 <CardTitle className="text-xl">{analysis.title}</CardTitle>
                 <CardDescription>
-                    Guardado el {analysis.createdAt ? format(analysis.createdAt, "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es }) : 'fecha desconocida'}
+                    Creado el {createdAtDate ? format(createdAtDate, "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es }) : 'fecha desconocida'}
                 </CardDescription>
             </CardHeader>
             <CardContent className="prose prose-sm dark:prose-invert max-w-none">
@@ -218,7 +226,7 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
                     <AlertDialogHeader>
                       <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Esto eliminará permanentemente el análisis guardado.
+                        Esta acción no se puede deshacer. Esto eliminará permanentemente el análisis y todas sus versiones.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -249,17 +257,30 @@ export default function SavedAnalysesPage() {
 
         setLoading(true);
         const analysesRef = collection(db, 'savedAnalyses');
-        const q = query(analysesRef, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
+        const q = query(analysesRef, where('userId', '==', user.uid), where('deleted', '!=', true), orderBy('createdAt', 'desc'));
 
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const analysesData = querySnapshot.docs.map(doc => {
-                const docData = doc.data();
-                return {
+        const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+            const analysesData: SavedAnalysis[] = [];
+            
+            for (const doc of querySnapshot.docs) {
+                const analysis = {
                     id: doc.id,
-                    ...docData,
-                    createdAt: (docData.createdAt as Timestamp)?.toDate() ?? new Date(),
+                    ...doc.data(),
+                    createdAt: (doc.data().createdAt as Timestamp)?.toDate() ?? new Date(),
                 } as SavedAnalysis;
-            });
+                
+                // Fetch versions subcollection for each analysis
+                const versionsRef = collection(db, 'savedAnalyses', doc.id, 'versions');
+                const versionsQuery = query(versionsRef, orderBy('createdAt', 'asc'));
+                const versionsSnapshot = await getDocs(versionsQuery);
+                analysis.versions = versionsSnapshot.docs.map(versionDoc => ({
+                   id: versionDoc.id,
+                   ...versionDoc.data()
+                } as AnalysisVersion));
+
+                analysesData.push(analysis);
+            }
+            
             setAnalyses(analysesData);
             setLoading(false);
         }, (error) => {
@@ -273,10 +294,25 @@ export default function SavedAnalysesPage() {
 
     const deleteAnalysis = useCallback(async (id: string) => {
         try {
-            await deleteDoc(doc(db, 'savedAnalyses', id));
+             // In a real app with soft delete, you'd update a 'deleted' flag.
+             // For now, we will delete the document and its subcollection.
+             const batch = writeBatch(db);
+             const analysisRef = doc(db, 'savedAnalyses', id);
+
+             // Delete all versions in the subcollection
+             const versionsRef = collection(db, 'savedAnalyses', id, 'versions');
+             const versionsSnapshot = await getDocs(versionsRef);
+             versionsSnapshot.forEach((doc) => {
+                 batch.delete(doc.ref);
+             });
+
+             // Delete the main analysis document
+             batch.delete(analysisRef);
+             await batch.commit();
+
             toast({
                 title: 'Análisis Eliminado',
-                description: 'El análisis ha sido eliminado correctamente de Firestore.',
+                description: 'El análisis y todas sus versiones han sido eliminados.',
             });
             // The onSnapshot listener will automatically update the UI
         } catch (error) {
