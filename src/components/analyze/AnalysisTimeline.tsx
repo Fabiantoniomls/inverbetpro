@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, where } from "firebase/firestore";
+import { collection, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { VersionCard } from "./VersionCard";
 import type { AnalysisVersion } from "@/lib/types/analysis";
@@ -11,8 +11,7 @@ import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 
 export default function AnalysisTimeline({ analysisId }: { analysisId: string }) {
   const versionsRef = collection(db, 'savedAnalyses', analysisId, 'versions');
-  // Simplificamos la consulta para evitar posibles problemas de índices compuestos que pueden causar errores de permisos si no existen.
-  // El orden se puede manejar en el cliente.
+  // Consulta simple para obtener versiones no eliminadas. El orden se manejará en el cliente.
   const q = query(versionsRef, where('deleted', '!=', true));
   const [snapshot, loading, error] = useCollection(q);
 
@@ -47,10 +46,15 @@ export default function AnalysisTimeline({ analysisId }: { analysisId: string })
     </Alert>
   );
 
-  // Ordenamos en el cliente para evitar la necesidad de un índice compuesto en Firestore.
+  // Ordenamos las versiones por fecha de creación en el lado del cliente.
+  // Esto evita la necesidad de un índice compuesto en Firestore y simplifica las reglas.
   const versions = snapshot?.docs
     .map(d => ({ id: d.id, ...d.data() } as AnalysisVersion))
-    .sort((a, b) => (a.createdAt as any)?.seconds - (b.createdAt as any)?.seconds);
+    .sort((a, b) => {
+        const dateA = (a.createdAt as any)?.toDate ? (a.createdAt as any).toDate() : new Date(0);
+        const dateB = (b.createdAt as any)?.toDate ? (b.createdAt as any).toDate() : new Date(0);
+        return dateA.getTime() - dateB.getTime();
+    });
 
   return (
     <div className="space-y-4">
