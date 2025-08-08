@@ -12,7 +12,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { DeconstructedAnalysisSchema } from './deconstruct-arguments';
+import { DeconstructedAnalysisSchema } from '@/lib/types/analysis';
 
 const CounterAnalysisInputSchema = z.object({
     inverapuestasAnalysis: DeconstructedAnalysisSchema,

@@ -84,6 +84,7 @@ export const DeconstructedAnalysisSchema = z.object({
     supportingPremises: z.array(z.string()).describe("Una lista de las razones, evidencias o argumentos clave que se presentan para apoyar la conclusión."),
     counterargumentsOrRisks: z.array(z.string()).describe("Una lista de los riesgos, debilidades o contraargumentos mencionados en el análisis."),
 });
+export type DeconstructedAnalysis = z.infer<typeof DeconstructedAnalysisSchema>;
 
 
 // Represents the main analysis "project" document
