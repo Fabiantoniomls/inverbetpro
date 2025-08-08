@@ -34,7 +34,7 @@ export const PickSchema = z.object({
   valueCalculated: z.number().optional().describe("El valor esperado (EV) calculado, como decimal (ej. 0.15 para 15%)."),
   estimatedProbability: z.number().optional().describe("La probabilidad estimada por la IA, en porcentaje (ej. 58.5 para 58.5%)."),
   confidenceScore: z.number().optional().describe("Puntuación de 1 a 10 sobre la confianza de la IA en su propio análisis."),
-  note: z.string().optional().describe("Una nota breve con los 2-3 factores clave que más influyeron en la decisión."),
+  keyFactors: z.array(z.string()).optional().describe("Un array de 2-3 factores clave que más influyeron en la decisión."),
 });
 export type Pick = z.infer<typeof PickSchema>;
 
