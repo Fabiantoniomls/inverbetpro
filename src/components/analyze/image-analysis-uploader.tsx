@@ -443,15 +443,15 @@ export function ImageAnalysisUploader() {
   return (
     <div 
         {...getRootProps()} 
-        className={`flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
+        className={`flex flex-col items-center justify-center w-full h-80 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50 bg-background/50'}`}
     >
       <input {...getInputProps()} />
-      <div className="flex flex-col items-center justify-center text-center">
-        <ImageUp className="w-12 h-12 text-muted-foreground mb-4" />
-        <p className="mb-2 text-sm text-muted-foreground">
-          <span className="font-semibold text-primary">Haz clic para subir</span> o arrastra y suelta una imagen
+      <div className="flex flex-col items-center justify-center text-center p-6">
+        <ImageUp className="w-16 h-16 text-muted-foreground mb-4" />
+        <p className="mb-2 text-lg text-foreground">
+          <span className="font-semibold text-primary">Haz clic para subir</span> o arrastra y suelta tu cupón
         </p>
-        <p className="text-xs text-muted-foreground">PNG, JPG</p>
+        <p className="text-sm text-muted-foreground">Sube una captura de pantalla y deja que la IA haga el trabajo pesado</p>
       </div>
     </div>
   );
