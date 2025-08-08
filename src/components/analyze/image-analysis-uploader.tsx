@@ -13,7 +13,7 @@ import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
 import type { AnalyzeBatchFromImageOutput, ExtractedMatch, SavedAnalysis } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
 import { useRouter } from 'next/navigation';
@@ -311,131 +311,135 @@ export function ImageAnalysisUploader() {
 
   if (step === 'extracting') {
     return (
-        <div className="space-y-6">
+        <Card className="flex flex-col items-center justify-center p-8 min-h-[30rem]">
             <div className="flex items-center justify-center gap-4 text-primary">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <p className="text-lg font-medium">Extrayendo partidos de la imagen...</p>
             </div>
-            {imagePreview && <img src={imagePreview} alt="Preview" className="w-full md:w-1/2 mx-auto rounded-lg opacity-50" />}
-        </div>
+            {imagePreview && <img src={imagePreview} alt="Preview" className="w-full md:w-1/2 mx-auto rounded-lg opacity-50 mt-8" />}
+        </Card>
     )
   }
   
   if (step === 'analyzing') {
     return (
-        <div className="space-y-6">
+         <Card className="flex flex-col items-center justify-center p-8 min-h-[30rem]">
             <div className="flex items-center justify-center gap-4 text-primary">
                 <Loader2 className="h-6 w-6 animate-spin" />
                 <p className="text-lg font-medium">Analizando partidos con superficie: {surface}...</p>
             </div>
-             <div className="space-y-2">
-                <Skeleton className="h-8 w-3/4" />
+             <div className="space-y-2 mt-8 w-full text-center">
+                <Skeleton className="h-8 w-3/4 mx-auto" />
                 <Skeleton className="h-24 w-full" />
             </div>
-        </div>
+        </Card>
     )
   }
 
   if (step === 'surface') {
     return (
-        <CardContent className="space-y-6">
-            <div className='flex flex-col md:flex-row gap-6 items-center'>
-                {imagePreview && <img src={imagePreview} alt="Preview" className="w-full md:w-1/3 rounded-lg" />}
-                <div className="w-full md:w-2/3 space-y-4">
-                    <Alert>
-                        <Sparkles className="h-4 w-4" />
-                        <AlertTitle>¡Casi listo! Un último paso.</AlertTitle>
-                        <AlertDescription>
-                           No pudimos determinar la superficie con certeza. Para garantizar la máxima precisión, por favor, selecciónala manualmente.
-                        </AlertDescription>
-                    </Alert>
-                    <div className="space-y-2">
-                        <Label htmlFor="surface">Superficie de Juego</Label>
-                        <Select name="surface" defaultValue={surface || undefined} onValueChange={(value) => setSurface(value as Surface)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una superficie..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Hard">Pista Dura (Hard)</SelectItem>
-                                <SelectItem value="Clay">Arcilla (Clay)</SelectItem>
-                                <SelectItem value="Grass">Hierba (Grass)</SelectItem>
-                                <SelectItem value="Football">Fútbol (No aplica)</SelectItem>
-                            </SelectContent>
-                        </Select>
+        <Card>
+            <CardContent className="p-8 space-y-6">
+                <div className='flex flex-col md:flex-row gap-8 items-center'>
+                    {imagePreview && <img src={imagePreview} alt="Preview" className="w-full md:w-1/3 rounded-lg" />}
+                    <div className="w-full md:w-2/3 space-y-4">
+                        <Alert>
+                            <Sparkles className="h-4 w-4" />
+                            <AlertTitle>¡Casi listo! Un último paso.</AlertTitle>
+                            <AlertDescription>
+                               No pudimos determinar la superficie con certeza. Para garantizar la máxima precisión, por favor, selecciónala manualmente.
+                            </AlertDescription>
+                        </Alert>
+                        <div className="space-y-2">
+                            <Label htmlFor="surface">Superficie de Juego</Label>
+                            <Select name="surface" defaultValue={surface || undefined} onValueChange={(value) => setSurface(value as Surface)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona una superficie..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Hard">Pista Dura (Hard)</SelectItem>
+                                    <SelectItem value="Clay">Arcilla (Clay)</SelectItem>
+                                    <SelectItem value="Grass">Hierba (Grass)</SelectItem>
+                                    <SelectItem value="Football">Fútbol (No aplica)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div className="flex justify-between pt-4">
-                <Button variant="outline" onClick={handleReset}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Cancelar
-                </Button>
-                <Button onClick={() => handleAnalysis(photoDataUri!, surface!, extractedMatches!)} disabled={!surface || isLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Confirmar y Analizar'}
-                </Button>
-            </div>
-        </CardContent>
+                <div className="flex justify-between pt-4">
+                    <Button variant="outline" onClick={handleReset}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Cancelar
+                    </Button>
+                    <Button onClick={() => handleAnalysis(photoDataUri!, surface!, extractedMatches!)} disabled={!surface || isLoading} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Confirmar y Analizar'}
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
     )
   }
 
   if (step === 'result' && result) {
     return (
-        <CardContent className="space-y-6">
-             <Alert variant="default" className="border-green-500 bg-green-500/10">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <AlertTitle>Análisis Completado por Inverapuestas Pro</AlertTitle>
-                <AlertDescription>
-                    Se ha generado tu informe de valor para la superficie: **{surface}**.
-                </AlertDescription>
-            </Alert>
+        <Card>
+            <CardContent className="p-8 space-y-6">
+                 <Alert variant="default" className="border-green-500 bg-green-500/10">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <AlertTitle>Análisis Completado por Inverapuestas Pro</AlertTitle>
+                    <AlertDescription>
+                        Se ha generado tu informe de valor para la superficie: **{surface}**.
+                    </AlertDescription>
+                </Alert>
 
-            <ActionButtons analysisText={result.consolidatedAnalysis} isTop={true} />
+                <ActionButtons analysisText={result.consolidatedAnalysis} isTop={true} />
 
-            <div className="prose prose-sm dark:prose-invert max-w-none border-t pt-4">
-                 <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={markdownComponents}
-                 >
-                    {result.consolidatedAnalysis}
-                </ReactMarkdown>
-            </div>
-
-            <ActionButtons analysisText={result.consolidatedAnalysis} />
-            
-            {isCounterAnalyzing && (
-                 <div className="space-y-6 pt-6">
-                    <div className="flex items-center justify-center gap-4 text-primary">
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                        <p className="text-lg font-medium">"iaedge" está contrastando el análisis...</p>
-                    </div>
-                    <Skeleton className="h-48 w-full" />
+                <div className="prose prose-sm dark:prose-invert max-w-none border-t pt-4">
+                     <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={markdownComponents}
+                     >
+                        {result.consolidatedAnalysis}
+                    </ReactMarkdown>
                 </div>
-            )}
 
-            {counterResult && (
-                <div className="space-y-6 pt-6 border-t mt-6">
-                     <Alert variant="default" className="border-blue-500 bg-blue-500/10">
-                        <Bot className="h-4 w-4 text-blue-500" />
-                        <AlertTitle>Contra-Análisis por iaedge</AlertTitle>
-                        <AlertDescription>
-                            Aquí tienes una segunda opinión para un análisis más robusto.
-                        </AlertDescription>
-                    </Alert>
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                            {counterResult}
-                        </ReactMarkdown>
+                <ActionButtons analysisText={result.consolidatedAnalysis} />
+                
+                {isCounterAnalyzing && (
+                     <div className="space-y-6 pt-6">
+                        <div className="flex items-center justify-center gap-4 text-primary">
+                            <Loader2 className="h-6 w-6 animate-spin" />
+                            <p className="text-lg font-medium">"iaedge" está contrastando el análisis...</p>
+                        </div>
+                        <Skeleton className="h-48 w-full" />
                     </div>
-                    <div className="flex justify-start pt-4 gap-2">
-                        <Button variant="outline" onClick={() => handleCopyToClipboard(counterResult)}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copiar Contra-Análisis
-                        </Button>
-                    </div>
-                </div>
-            )}
+                )}
 
-        </CardContent>
+                {counterResult && (
+                    <div className="space-y-6 pt-6 border-t mt-6">
+                         <Alert variant="default" className="border-blue-500 bg-blue-500/10">
+                            <Bot className="h-4 w-4 text-blue-500" />
+                            <AlertTitle>Contra-Análisis por iaedge</AlertTitle>
+                            <AlertDescription>
+                                Aquí tienes una segunda opinión para un análisis más robusto.
+                            </AlertDescription>
+                        </Alert>
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                {counterResult}
+                            </ReactMarkdown>
+                        </div>
+                        <div className="flex justify-start pt-4 gap-2">
+                            <Button variant="outline" onClick={() => handleCopyToClipboard(counterResult)}>
+                                <Copy className="mr-2 h-4 w-4" />
+                                Copiar Contra-Análisis
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+            </CardContent>
+        </Card>
     )
   }
 
@@ -443,15 +447,15 @@ export function ImageAnalysisUploader() {
   return (
     <div 
         {...getRootProps()} 
-        className={`flex flex-col items-center justify-center w-full h-80 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50 bg-background/50'}`}
+        className={`flex flex-col items-center justify-center w-full min-h-[30rem] border-2 border-dashed rounded-lg cursor-pointer transition-colors bg-card ${isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
     >
       <input {...getInputProps()} />
       <div className="flex flex-col items-center justify-center text-center p-6">
-        <ImageUp className="w-16 h-16 text-muted-foreground mb-4" />
-        <p className="mb-2 text-lg text-foreground">
-          <span className="font-semibold text-primary">Haz clic para subir</span> o arrastra y suelta tu cupón
+        <ImageUp className="w-20 h-20 text-muted-foreground mb-4" />
+        <p className="mb-2 text-xl font-semibold text-foreground">
+          <span className="text-primary">Haz clic para subir</span> o arrastra y suelta tu cupón
         </p>
-        <p className="text-sm text-muted-foreground">Sube una captura de pantalla y deja que la IA haga el trabajo pesado</p>
+        <p className="text-lg text-muted-foreground">Sube una captura de pantalla y deja que la IA haga el trabajo pesado</p>
       </div>
     </div>
   );
