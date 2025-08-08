@@ -10,6 +10,14 @@ export interface UserProfile {
   createdAt: Date;
 }
 
+export interface UserSettings {
+  initialBankroll: number;
+  preferredStakingModel: 'Fijo' | 'Porcentual' | 'Kelly Fraccionario';
+  kellyFraction: number;
+  fixedStakeAmount: number;
+  percentageStakeAmount: number;
+}
+
 export interface Bet {
   id: string; // Will be a unique ID, e.g., Firestore document ID
   userId: string;
