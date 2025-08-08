@@ -84,6 +84,10 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                 externalAnalysis: externalAnalysis
             });
 
+            // We need to extract picks from the new counter-analysis to save them
+            const { picks } = await extractPicks({ analysisContent: result });
+
+
             // Save this as a new version
              const versionsCollectionRef = collection(db, 'savedAnalyses', analysisId, 'versions');
              const newVersionData = {
@@ -94,6 +98,7 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                 createdAt: serverTimestamp(),
                 type: "interpelacion" as const,
                 deleted: false,
+                picks: picks || [],
              };
              await addDoc(versionsCollectionRef, newVersionData);
 
@@ -121,6 +126,12 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
         setIsLoadingPicks(true);
         setExtractedPicks(null);
         try {
+            // First, try to use the picks already stored in the version
+            if (version.picks && version.picks.length > 0) {
+                setExtractedPicks(version.picks);
+                return;
+            }
+            // If not available, extract them from the markdown
             const { picks } = await extractPicks({ analysisContent: version.contentMarkdown });
             if (picks && picks.length > 0) {
                 setExtractedPicks(picks);

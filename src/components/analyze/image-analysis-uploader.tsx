@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
-import type { AnalyzeBatchFromImageOutput, ExtractedMatch } from '@/lib/types/analysis';
+import type { AnalyzeBatchFromImageOutput, ExtractedMatch, Pick } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -186,7 +186,7 @@ export function ImageAnalysisUploader() {
     });
   }
 
- const handleSaveAnalysis = async (analysisText: string, matches: ExtractedMatch[] | null) => {
+ const handleSaveAnalysis = async (analysisText: string, picks: Pick[] | undefined, matches: ExtractedMatch[] | null) => {
     if (!analysisText || !user) {
         toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para guardar un análisis.' });
         return;
@@ -224,6 +224,7 @@ export function ImageAnalysisUploader() {
             createdAt: serverTimestamp(),
             type: "original" as const,
             deleted: false,
+            picks: picks || [],
         };
         const versionDocRef = await addDoc(versionsCollectionRef, newVersionData);
         
@@ -274,13 +275,13 @@ export function ImageAnalysisUploader() {
   };
 
 
-  const ActionButtons = ({ analysisText, isTop = false }: { analysisText: string, isTop?: boolean }) => (
+  const ActionButtons = ({ analysisText, picks, isTop = false }: { analysisText: string, picks: Pick[] | undefined, isTop?: boolean }) => (
     <div className={`flex justify-start pt-4 gap-2 flex-wrap ${isTop ? 'pb-4' : ''}`}>
         <Button variant="outline" onClick={handleReset}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Analizar otra Imagen
         </Button>
-        <Button variant="outline" onClick={() => handleSaveAnalysis(analysisText, extractedMatches)} disabled={isSaving}>
+        <Button variant="outline" onClick={() => handleSaveAnalysis(analysisText, picks, extractedMatches)} disabled={isSaving}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Guardar Análisis
         </Button>
@@ -385,7 +386,7 @@ export function ImageAnalysisUploader() {
                     </AlertDescription>
                 </Alert>
 
-                <ActionButtons analysisText={result.consolidatedAnalysis} isTop={true} />
+                <ActionButtons analysisText={result.consolidatedAnalysis} picks={result.valuePicks} isTop={true} />
 
                 <div className="prose prose-sm dark:prose-invert max-w-none border-t pt-4">
                      <ReactMarkdown
@@ -404,7 +405,7 @@ export function ImageAnalysisUploader() {
                 )}
 
 
-                <ActionButtons analysisText={result.consolidatedAnalysis} />
+                <ActionButtons analysisText={result.consolidatedAnalysis} picks={result.valuePicks} />
                 
                 {isCounterAnalyzing && (
                      <div className="space-y-6 pt-6">

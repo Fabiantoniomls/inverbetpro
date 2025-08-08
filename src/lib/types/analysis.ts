@@ -103,5 +103,3 @@ export interface AnalysisVersion {
         learnings: string[];
     };
 }
-
-    
