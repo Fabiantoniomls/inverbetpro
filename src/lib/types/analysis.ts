@@ -38,10 +38,23 @@ export const PickSchema = z.object({
 });
 export type Pick = z.infer<typeof PickSchema>;
 
+export const MainPredictionInsightsSchema = z.object({
+    primaryConclusion: z.string().describe("La predicción principal del análisis."),
+    confidenceScore: z.number().describe("Un número entero (de 0 a 100) que representa el nivel de confianza en la conclusión principal."),
+    keyFactors: z.array(z.string()).describe("Un array de 3 a 5 strings, donde cada string es un factor clave conciso que influyó decisivamente en el análisis."),
+    outcomeProbabilities: z.array(z.object({
+        outcome: z.string(),
+        probability: z.number(),
+    })).describe("Un array de objetos que representa la distribución de probabilidad de los posibles resultados."),
+});
+export type MainPredictionInsights = z.infer<typeof MainPredictionInsightsSchema>;
+
+
 export const AnalyzeBatchFromImageOutputSchema = z.object({
     consolidatedAnalysis: z.string().describe("A single string containing the full, formatted markdown analysis for all matches."),
     valuePicks: z.array(PickSchema).describe("An array of structured betting picks with positive value, now including XAI fields."),
     extractedMatches: z.array(ExtractedMatchSchema).optional().describe("The raw data of matches extracted from the image."),
+    mainPredictionInsights: MainPredictionInsightsSchema.optional().describe("Explainable AI (XAI) insights for the main prediction."),
 });
 export type AnalyzeBatchFromImageOutput = z.infer<typeof AnalyzeBatchFromImageOutputSchema>;
 

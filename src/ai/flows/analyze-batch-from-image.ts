@@ -18,6 +18,7 @@ import {
     AnalyzeBatchFromImageInputSchema, 
     AnalyzeBatchFromImageOutputSchema,
     PickSchema,
+    MainPredictionInsightsSchema,
     type AnalyzeBatchFromImageInput,
     type AnalyzeBatchFromImageOutput,
 } from '@/lib/types/analysis';
@@ -43,24 +44,6 @@ Para cada selección, extrae los siguientes datos de forma estructurada:
 
 Devuelve los datos como un array de objetos JSON. Ignora cualquier otra información como la cuota total de la combinada, ganancias potenciales, etc.
 
-Ejemplo de Salida JSON Esperada:
-[
-  {
-    "sport": "Tenis",
-    "participants": "Joao Fonseca - Bu Yunchaokete",
-    "market": "Ganador",
-    "selection": "Joao Fonseca",
-    "odds": 1.42
-  },
-  {
-    "sport": "Fútbol",
-    "participants": "FC Bayern Munchen - Tottenham Hotspur",
-    "market": "Resultado del partido",
-    "selection": "FC Bayern Munchen",
-    "odds": 1.50
-  }
-]
-
 Photo: {{media url=photoDataUri}}`,
     config: {
       temperature: 0.2
@@ -74,44 +57,24 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
     surface: z.string().describe("The playing surface (Hard, Clay, or Grass). This is a CRITICAL factor for tennis matches."),
   }) },
   output: { schema: z.object({
-      report: z.string().describe("The full analysis report in Markdown, excluding the value bets table."),
-      valuePicks: z.array(PickSchema).describe("An array of structured betting picks ONLY for those with positive value (EV > 0), including XAI fields.")
+      analysisReport: z.string().describe("Un informe de texto detallado (en formato Markdown) que explique tu razonamiento, analizando las fortalezas, debilidades y factores contextuales de cada competidor."),
+      valuePicks: z.array(PickSchema).describe("Un array de objetos, donde cada objeto representa una apuesta de valor identificada."),
+      mainPredictionInsights: MainPredictionInsightsSchema,
   }) },
-  prompt: `
-  Eres "Inverapuestas Pro", un analista deportivo de IA de élite, especializado en encontrar apuestas de valor (+EV) y explicar tu razonamiento. Te han proporcionado una lista de selecciones de un cupón de apuestas en formato JSON. Para los partidos de tenis, un factor CRÍTICO es la superficie de juego: **{{{surface}}}**.
+  prompt: `Eres un analista experto en inversiones deportivas de clase mundial. Tu tarea es realizar un análisis cuantitativo y cualitativo completo basado en los datos de los partidos proporcionados. Tu salida DEBE ser un único objeto JSON con la siguiente estructura y contenido:
 
-  **Tu tarea es generar dos salidas: un informe de texto y una lista JSON de apuestas de valor.**
+1.  **\`analysisReport\`**: Un informe de texto detallado (en formato Markdown) que explique tu razonamiento, analizando las fortalezas, debilidades y factores contextuales de cada competidor. Incluye una tabla de valor al final del reporte.
+2.  **\`valuePicks\`**: Un array de objetos, donde cada objeto representa una apuesta de valor identificada. Para cada pick, rellena TODOS los siguientes campos: \`sport\`, \`match\`, \`market\`, \`selection\`, \`odds\`, \`estimatedProbability\`, \`valueCalculated\`, \`confidenceScore\`, y \`note\`.
+3.  **\`mainPredictionInsights\`**: Un objeto que contenga los elementos de IA Explicable para la predicción que consideres MÁS importante o con más confianza de todo el cupón:
+    *   **\`primaryConclusion\`**: La predicción principal (ej. "Victoria de Carlos Alcaraz").
+    *   **\`confidenceScore\`**: Un número entero (de 0 a 100) que represente tu nivel de confianza en la \`primaryConclusion\`.
+    *   **\`keyFactors\`**: Un array de 3 a 5 strings, donde cada string es un factor clave conciso que influyó decisivamente en tu análisis (ej. "Dominio superior de Alcaraz en arcilla", "Reciente estado de forma de Zverev").
+    *   **\`outcomeProbabilities\`**: Un array de objetos, cada uno con las claves \`outcome\` y \`probability\` (un número flotante entre 0 y 1), que represente la distribución de probabilidad de los posibles resultados del mercado principal. La suma de las probabilidades debe ser 1.0.
 
-  **PARTE 1: INFORME DE ANÁLISIS (Formato Markdown)**
-  Genera un informe en español con la siguiente estructura. **IMPORTANTE: NO incluyas la tabla de valor en este informe de texto.**
-  1.  **Análisis Detallado de Selecciones:**
-      *   Para cada selección del cupón, presenta un análisis conciso pero potente.
-      *   **Para Tenis:** Céntrate en el rendimiento en la superficie **{{{surface}}}**.
-      *   **Para Fútbol:** Analiza la forma actual, H2H, tácticas, etc.
-      *   Incluye emojis para hacerlo más visual (ej. 💥, 🚀, 💎).
-      *   Calcula y muestra la "Probabilidad real" estimada por ti para el resultado SELECCIONADO.
-      *   Calcula y muestra el "Valor apuesta" (EV = (Probabilidad Real * Cuota) - 1).
+Analiza los siguientes datos y genera la salida JSON completa y estructurada como se ha especificado. Para los partidos de tenis, un factor CRÍTICO es la superficie de juego: **{{{surface}}}**.
 
-  2.  **Conclusiones Rápidas y Recomendaciones Finales:**
-      *   Resume tus hallazgos clave y ofrece recomendaciones estratégicas.
-
-
-  **PARTE 2: APUESTAS DE VALOR (Formato JSON Estructurado)**
-  Crea un array de objetos JSON para las apuestas de valor.
-  *   **Importante:** Incluye en este array ÚNICAMENTE las selecciones donde calculas un valor positivo (EV > 0).
-  *   Para cada pick, rellena TODOS los siguientes campos:
-      *   \`sport\`: 'Fútbol' o 'Tenis'.
-      *   \`match\`: El campo 'participants' del JSON de entrada.
-      *   \`market\`: El mercado de la apuesta.
-      *   \`selection\`: La selección específica.
-      *   \`odds\`: La cuota decimal.
-      *   \`estimatedProbability\`: Tu probabilidad real estimada (ej. 58.5 para 58.5%).
-      *   \`valueCalculated\`: El valor o "edge" calculado (ej. 0.15 para 15%).
-      *   \`confidenceScore\`: **Tu nivel de confianza en este análisis (de 1 a 10).**
-      *   \`note\`: **Un string breve (máx. 2-3 factores) que resuma los motivos principales de tu análisis (ej. "Dominio en la superficie, H2H favorable").**
-
-  Utiliza el siguiente JSON de selecciones para generar tu informe y tu lista JSON:
-  {{{matchesJson}}}
+Datos de los Partidos:
+{{{matchesJson}}}
   `,
     config: {
       temperature: 0.2
@@ -159,8 +122,9 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
 
     // Return the final analysis, along with the matches for context.
     return {
-        consolidatedAnalysis: analysisResult.output.report,
+        consolidatedAnalysis: analysisResult.output.analysisReport,
         valuePicks: analysisResult.output.valuePicks,
+        mainPredictionInsights: analysisResult.output.mainPredictionInsights,
         extractedMatches: input.extractedMatches, 
     };
   }
