@@ -16,3 +16,4 @@ import '@/ai/flows/badge-unlocked.ts';
 import '@/ai/flows/streak-message.ts';
 import '@/ai/flows/onboarding-coach.ts';
 import '@/ai/flows/inactive-analysis-reminder.ts';
+import '@/ai/flows/weekly-summary-notification.ts';
