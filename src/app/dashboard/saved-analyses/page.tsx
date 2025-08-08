@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { SavedAnalysis, AnalysisVersion } from '@/lib/types/analysis';
@@ -29,7 +29,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, getDocs, Timestamp, collectionGroup, writeBatch } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, getDocs, Timestamp, writeBatch } from 'firebase/firestore';
 
 
 // Custom renderer for tables to add ShadCN styling
@@ -80,7 +80,7 @@ function AnalysisCard({ analysis, onDelete }: AnalysisCardProps) {
     if (!firstVersion) return null; // Don't render card if there are no versions
 
     const { introduction, detailedAnalysis, valueTableAndRecs } = getAnalysisParts(firstVersion.contentMarkdown);
-    const createdAtDate = firstVersion.createdAt instanceof Timestamp ? firstVersion.createdAt.toDate() : firstVersion.createdAt;
+    const createdAtDate = analysis.createdAt instanceof Timestamp ? analysis.createdAt.toDate() : analysis.createdAt;
 
 
     const handleGenerateCounterAnalysis = async () => {
@@ -273,10 +273,14 @@ export default function SavedAnalysesPage() {
                 const versionsRef = collection(db, 'savedAnalyses', doc.id, 'versions');
                 const versionsQuery = query(versionsRef, orderBy('createdAt', 'asc'));
                 const versionsSnapshot = await getDocs(versionsQuery);
-                analysis.versions = versionsSnapshot.docs.map(versionDoc => ({
-                   id: versionDoc.id,
-                   ...versionDoc.data()
-                } as AnalysisVersion));
+                analysis.versions = versionsSnapshot.docs.map(versionDoc => {
+                   const versionData = versionDoc.data();
+                   return {
+                       id: versionDoc.id,
+                       ...versionData,
+                       createdAt: (versionData.createdAt as Timestamp)?.toDate() ?? new Date(),
+                   } as AnalysisVersion
+                });
 
                 analysesData.push(analysis);
             }
@@ -293,13 +297,12 @@ export default function SavedAnalysesPage() {
     }, [user, toast]);
 
     const deleteAnalysis = useCallback(async (id: string) => {
+        if (!user) return;
         try {
-             // In a real app with soft delete, you'd update a 'deleted' flag.
-             // For now, we will delete the document and its subcollection.
              const batch = writeBatch(db);
              const analysisRef = doc(db, 'savedAnalyses', id);
 
-             // Delete all versions in the subcollection
+             // Find all versions in the subcollection to delete them
              const versionsRef = collection(db, 'savedAnalyses', id, 'versions');
              const versionsSnapshot = await getDocs(versionsRef);
              versionsSnapshot.forEach((doc) => {
@@ -323,7 +326,7 @@ export default function SavedAnalysesPage() {
                 description: 'No se pudo eliminar el análisis.',
             });
         }
-    }, [toast]);
+    }, [toast, user]);
 
 
     if (loading) {
@@ -395,3 +398,5 @@ export default function SavedAnalysesPage() {
         </div>
     );
 }
+
+    
