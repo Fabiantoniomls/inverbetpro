@@ -31,6 +31,7 @@ import { Timestamp, doc, updateDoc, serverTimestamp, addDoc, collection } from '
 import { db } from '@/lib/firebase';
 import { extractPicks } from '@/ai/flows/extract-picks';
 import { ExtractPicksModal } from './ExtractPicksModal';
+import { ValueBetsTable } from './value-bets-table';
 
 
 // Custom renderer for tables to add ShadCN styling
@@ -231,10 +232,19 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                     </AlertDialog>
                 </div>
             </CardHeader>
-            <CardContent className="prose prose-sm dark:prose-invert max-w-none">
-                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                    {version.contentMarkdown}
-                </ReactMarkdown>
+            <CardContent className="space-y-6">
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {version.contentMarkdown}
+                    </ReactMarkdown>
+                </div>
+
+                {version.picks && version.picks.length > 0 && (
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-bold">Tabla de Apuestas de Valor</h3>
+                        <ValueBetsTable data={version.picks} />
+                    </div>
+                )}
 
                  {version.type !== 'interpelacion' && (
                     <>
