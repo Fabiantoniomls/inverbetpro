@@ -10,3 +10,4 @@ import '@/ai/flows/counter-analysis.ts';
 import '@/ai/flows/extract-picks.ts';
 import '@/ai/flows/summarize-kpis.ts';
 import '@/ai/flows/summarize-performance-chart.ts';
+import '@/ai/flows/deconstruct-arguments.ts';
