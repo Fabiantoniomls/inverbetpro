@@ -38,7 +38,7 @@ const saveBetToHistory = async (bet: Omit<Bet, 'id' | 'createdAt'>): Promise<voi
 };
 
 
-export function StakeCalculator({ stakeData, onBack }: { stakeData: { probability: number; odds: number; match: string, market: string; selection: string, sport: 'Fútbol' | 'Tenis' }, onBack: () => void }) {
+export function StakeCalculator({ stakeData, onBack }: { stakeData: { probability: number; odds: number; match: string, market: string; selection: string, sport: 'Fútbol' | 'Tenis', analysisId?: string, versionId?: string }, onBack: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [stake, setStake] = useState<number | null>(null);
   const [isBetRegistered, setIsBetRegistered] = useState(false);
@@ -95,6 +95,10 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
             valueCalculated: (stakeData.probability * stakeData.odds) - 1,
             estimatedProbability: stakeData.probability * 100,
             profitOrLoss: 0,
+            source: {
+                analysisId: stakeData.analysisId || 'manual',
+                versionId: stakeData.versionId || 'manual'
+            }
         };
 
         await saveBetToHistory(betToSave);
