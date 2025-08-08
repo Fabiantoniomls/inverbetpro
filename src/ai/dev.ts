@@ -12,3 +12,4 @@ import '@/ai/flows/summarize-kpis.ts';
 import '@/ai/flows/summarize-performance-chart.ts';
 import '@/ai/flows/deconstruct-arguments.ts';
 import '@/ai/flows/goal-coach.ts';
+import '@/ai/flows/badge-unlocked.ts';
