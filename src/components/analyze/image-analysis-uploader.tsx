@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
-import type { AnalyzeBatchFromImageOutput, ExtractedMatch, SavedAnalysis, AnalysisVersion } from '@/lib/types/analysis';
+import type { AnalyzeBatchFromImageOutput, ExtractedMatch, Pick } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -20,40 +20,13 @@ import { Label } from '../ui/label';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { ValueBetsTable } from './value-bets-table';
 
-
-// Custom renderer for tables to add ShadCN styling
-function MarkdownTable({ children }: { children: React.ReactNode }) {
-    return (
-        <div className="overflow-x-auto rounded-lg border my-4">
-            <table className="min-w-full divide-y divide-border">{children}</table>
-        </div>
-    );
-}
-
-function MarkdownTHead({ children }: { children: React.ReactNode }) {
-    return <thead className="bg-muted/50">{children}</thead>;
-}
-
-function MarkdownTr({ children }: { children: React.ReactNode }) {
-    return <tr className="hover:bg-muted/50">{children}</tr>;
-}
-
-function MarkdownTh({ children }: { children: React.ReactNode }) {
-    return <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">{children}</th>;
-}
-
-function MarkdownTd({ children }: { children: React.ReactNode }) {
-    return <td className="px-4 py-3 whitespace-nowrap text-sm">{children}</td>;
-}
 
 const markdownComponents = {
-    table: MarkdownTable,
-    thead: MarkdownTHead,
-    tr: MarkdownTr,
-    th: MarkdownTh,
-    td: MarkdownTd,
+   // We are now using a custom component for the table
+   table: () => null,
 };
 
 type AnalysisStep = 'upload' | 'extracting' | 'surface' | 'analyzing' | 'result';
@@ -213,16 +186,19 @@ export function ImageAnalysisUploader() {
     });
   }
 
-  const handleSaveAnalysis = async (analysisText: string, matches: ExtractedMatch[] | null) => {
+ const handleSaveAnalysis = async (analysisText: string, matches: ExtractedMatch[] | null) => {
     if (!analysisText || !user) {
         toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para guardar un análisis.' });
         return;
     }
     setIsSaving(true);
     try {
-        // Step 1: Create the main analysis document
+        // Step 1: Create the main analysis document to get its ID
         const analysesCollectionRef = collection(db, 'savedAnalyses');
-        const title = matches?.[0]?.participants ? `${matches[0].participants}` + (matches.length > 1 ? ` y ${matches.length-1} más` : '') : `Análisis del ${new Date().toLocaleDateString()}`;
+        const title = matches?.[0]?.participants 
+            ? `${matches[0].participants}` + (matches.length > 1 ? ` y ${matches.length - 1} más` : '') 
+            : `Análisis del ${new Date().toLocaleDateString()}`;
+        
         const newAnalysisData = {
             userId: user.uid,
             title: title,
@@ -238,7 +214,7 @@ export function ImageAnalysisUploader() {
         };
         const analysisDocRef = await addDoc(analysesCollectionRef, newAnalysisData);
 
-        // Step 2: Create the first version in the subcollection using the new analysis ID
+        // Step 2: Use the new ID to create the first version in the subcollection
         const versionsCollectionRef = collection(db, 'savedAnalyses', analysisDocRef.id, 'versions');
         const newVersionData = {
             analysisId: analysisDocRef.id,
@@ -419,6 +395,14 @@ export function ImageAnalysisUploader() {
                         {result.consolidatedAnalysis}
                     </ReactMarkdown>
                 </div>
+                
+                {result.valuePicks && result.valuePicks.length > 0 && (
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-bold">Tabla de Apuestas de Valor</h3>
+                        <ValueBetsTable data={result.valuePicks} />
+                    </div>
+                )}
+
 
                 <ActionButtons analysisText={result.consolidatedAnalysis} />
                 
@@ -442,7 +426,7 @@ export function ImageAnalysisUploader() {
                             </AlertDescription>
                         </Alert>
                         <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {counterResult}
                             </ReactMarkdown>
                         </div>
@@ -477,5 +461,7 @@ export function ImageAnalysisUploader() {
     </div>
   );
 }
+
+    
 
     

@@ -25,8 +25,23 @@ export const AnalyzeBatchFromImageInputSchema = z.object({
 export type AnalyzeBatchFromImageInput = z.infer<typeof AnalyzeBatchFromImageInputSchema>;
 
 
+export const PickSchema = z.object({
+  sport: z.enum(['Fútbol', 'Tenis']),
+  match: z.string(),
+  market: z.string(),
+  selection: z.string(),
+  odds: z.number(),
+  valueCalculated: z.number().optional(),
+  estimatedProbability: z.number().optional(),
+  stakeSuggestion: z.number().optional(),
+  confidenceScore: z.number().optional(),
+  note: z.string().optional(),
+});
+export type Pick = z.infer<typeof PickSchema>;
+
 export const AnalyzeBatchFromImageOutputSchema = z.object({
     consolidatedAnalysis: z.string().describe("A single string containing the full, formatted markdown analysis for all matches."),
+    valuePicks: z.array(PickSchema).describe("An array of structured betting picks with positive value."),
     extractedMatches: z.array(ExtractedMatchSchema).optional().describe("The raw data of matches extracted from the image."),
 });
 export type AnalyzeBatchFromImageOutput = z.infer<typeof AnalyzeBatchFromImageOutputSchema>;
@@ -51,19 +66,7 @@ export const FundamentalAnalysisOutputSchema = z.object({
 export type FundamentalAnalysisOutput = z.infer<typeof FundamentalAnalysisOutputSchema>;
 
 
-export const PickSchema = z.object({
-  sport: z.enum(['Fútbol', 'Tenis']),
-  match: z.string(),
-  market: z.string(),
-  selection: z.string(),
-  odds: z.number(),
-  valueCalculated: z.number().optional(),
-  estimatedProbability: z.number().optional(),
-  stakeSuggestion: z.number().optional(),
-  confidenceScore: z.number().optional(),
-  note: z.string().optional(),
-});
-export type Pick = z.infer<typeof PickSchema>;
+
 
 // Represents the main analysis "project" document
 export interface SavedAnalysis {
@@ -84,7 +87,7 @@ export interface SavedAnalysis {
 
 // Represents a single version document within the 'versions' subcollection
 export interface AnalysisVersion {
-    id: string;
+    id:string;
     analysisId: string;
     author: "user" | "ai" | "external";
     authorId?: string;
@@ -100,3 +103,5 @@ export interface AnalysisVersion {
         learnings: string[];
     };
 }
+
+    

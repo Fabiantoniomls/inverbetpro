@@ -16,6 +16,7 @@ import {
     ExtractedMatchSchema, 
     AnalyzeBatchFromImageInputSchema, 
     AnalyzeBatchFromImageOutputSchema,
+    PickSchema,
     type AnalyzeBatchFromImageInput,
     type AnalyzeBatchFromImageOutput,
 } from '@/lib/types/analysis';
@@ -71,14 +72,19 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
     matchesJson: z.string(),
     surface: z.string().describe("The playing surface (Hard, Clay, or Grass). This is a CRITICAL factor for tennis matches."),
   }) },
-  output: { schema: AnalyzeBatchFromImageOutputSchema },
+  output: { schema: z.object({
+      report: z.string().describe("The full analysis report in Markdown, excluding the value bets table."),
+      valuePicks: z.array(PickSchema).describe("An array of structured betting picks ONLY for those with positive value (EV > 0).")
+  }) },
   prompt: `
   Eres "Inverapuestas Pro", un analista deportivo de IA de élite, especializado en encontrar apuestas de valor (+EV) en tenis y fútbol. Tu estilo es directo, visual y lleno de "insights". Te han proporcionado una lista de selecciones de un cupón de apuestas en formato JSON. Para los partidos de tenis, un factor CRÍTICO es la superficie de juego: **{{{surface}}}**.
 
   **Tu análisis de tenis DEBE girar en torno a cómo rinden los jugadores EN ESA SUPERFICIE ESPECÍFICA.** Para el fútbol, la superficie no es relevante.
 
-  Tu tarea es generar un informe de análisis completo en formato Markdown, en español. El informe debe tener la siguiente estructura:
+  Tu tarea es generar un informe de análisis y una lista estructurada de apuestas de valor.
 
+  **PARTE 1: INFORME DE ANÁLISIS (Formato Markdown)**
+  Genera un informe en español con la siguiente estructura. NO incluyas la tabla de valor en este informe.
   1.  **Análisis Detallado de Selecciones:**
       *   Para cada selección del cupón, presenta un análisis conciso pero potente.
       *   **Para Tenis:** Céntrate en el rendimiento en la superficie **{{{surface}}}**. Incluye datos clave como % de victorias en la superficie, H2H en la misma superficie, y estadísticas relevantes (ej. % de puntos ganados al servicio en {{{surface}}}).
@@ -90,19 +96,20 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
   2.  **Conclusiones Rápidas (Opcional):**
       *   Si hay selecciones que son muy claras o no requieren mucho detalle, coméntalas brevemente aquí.
 
-  3.  **TABLA DE APUESTAS DE VALOR:**
-      *   Crea una tabla en Markdown con las columnas: | Partido | Selección | Cuota | Prob. Estimada (%) | Valor Calculado |
-      *   **Importante:** Incluye en esta tabla ÚNICAMENTE las selecciones con valor positivo (EV > 0).
-      *   **Crítico:** Ordena la tabla de MAYOR a MENOR "Valor Calculado".
-
-  4.  **Recomendaciones Finales:**
+  3.  **Recomendaciones Finales:**
       *   Ofrece 2-3 recomendaciones clave basadas en tu análisis, destacando las mejores oportunidades encontradas en el cupón.
       *   Añade una nota final de estrategia si es necesario (ej. "Aunque hay valor en X, es una apuesta de alto riesgo").
 
-  Utiliza el siguiente JSON de selecciones para generar tu informe:
-  {{{matchesJson}}}
 
-  Adopta un tono profesional pero accesible. ¡Demuestra por qué entender el contexto (especialmente la superficie en tenis) lo es todo!
+  **PARTE 2: APUESTAS DE VALOR (Formato JSON)**
+  Crea un array de objetos JSON para las apuestas de valor.
+  *   **Importante:** Incluye en este array ÚNICAMENTE las selecciones con valor positivo (EV > 0).
+  *   Para cada pick, extrae los siguientes campos: 'sport', 'match', 'market', 'selection', 'odds', 'estimatedProbability', 'valueCalculated'.
+  *   'estimatedProbability' debe ser un número (ej. 58.5 para 58.5%).
+  *   'valueCalculated' debe ser un número (ej. 0.15 para 15%).
+
+  Utiliza el siguiente JSON de selecciones para generar tu informe y tu lista JSON:
+  {{{matchesJson}}}
   `,
     config: {
       temperature: 0.2
@@ -127,6 +134,7 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
       return {
         extractedMatches: extractedData.matches,
         consolidatedAnalysis: '', // Empty analysis
+        valuePicks: [],
       };
     }
 
@@ -149,8 +157,11 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
 
     // Return the final analysis, along with the matches for context.
     return {
-        ...analysisResult.output,
+        consolidatedAnalysis: analysisResult.output.report,
+        valuePicks: analysisResult.output.valuePicks,
         extractedMatches: input.extractedMatches, 
     };
   }
 );
+
+    
