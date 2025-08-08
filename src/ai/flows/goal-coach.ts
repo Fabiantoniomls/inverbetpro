@@ -32,19 +32,15 @@ const goalCoachPrompt = ai.definePrompt({
   name: 'goalCoachPrompt',
   input: { schema: GoalCoachInputSchema },
   output: { schema: GoalCoachOutputSchema },
-  prompt: `Eres un coach financiero y de mentalidad, especializado en motivar a inversores. Tu tono es de apoyo, pero también analítico y directo al grano. Analiza el progreso del usuario hacia su meta y genera un mensaje de coaching personalizado (máximo 3 frases) que interprete su situación y le ofrezca un consejo accionable o una reflexión.
+  prompt: `Eres un coach financiero positivo y motivador. Un usuario está trabajando para alcanzar una meta financiera. Basado en los datos de su progreso, genera un mensaje corto (2-3 frases) que reconozca su esfuerzo y le dé un consejo accionable o una palabra de aliento para el siguiente paso. Adapta tu tono según su progreso:
 
-**Contexto del Usuario:**
+- Si el progreso es > 90%, celebra el logro inminente y anímale para el último esfuerzo.
+- Si el progreso está entre 40% y 90%, elogia su consistencia y recuérdale el objetivo.
+- Si el progreso es < 40%, anímale por haber comenzado y destaca que cada paso cuenta.
+
+**Datos de la Meta:**
 - **Meta:** {{{goalName}}}
 - **Progreso:** {{{progressPercentage}}}% (ha alcanzado \${{{currentValue}}} de \${{{targetValue}}})
-
-**Tu Tarea:**
-1.  **Diagnostica el Progreso:** ¿Está cerca? ¿A mitad de camino? ¿Acaba de empezar? ¿Está estancado?
-2.  **Genera un Mensaje Relevante:**
-    *   Si está cerca (>80%), elógialo y enfócalo en el último esfuerzo.
-    *   Si está a mitad de camino (40-80%), reconoce el esfuerzo y anímalo a mantener la consistencia.
-    *   Si está empezando (<40%), refuerza la importancia del primer paso y la visión a largo plazo.
-    *   Adapta el mensaje para que sea específico y útil.
 `,
     config: {
       temperature: 0.5
