@@ -11,8 +11,9 @@ import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 
 export default function AnalysisTimeline({ analysisId }: { analysisId: string }) {
   const versionsRef = collection(db, 'savedAnalyses', analysisId, 'versions');
-  // Query to get all versions that are not soft-deleted, ordered by creation date
-  const q = query(versionsRef, where('deleted', '!=', true), orderBy('createdAt','asc'));
+  // Simplificamos la consulta para evitar posibles problemas de índices compuestos.
+  // El orden se puede manejar en el cliente si es necesario, aunque onSnapshot no garantiza orden sin un orderBy.
+  const q = query(versionsRef, where('deleted', '!=', true));
   const [snapshot, loading, error] = useCollection(q);
 
   if (loading) return (
@@ -27,10 +28,10 @@ export default function AnalysisTimeline({ analysisId }: { analysisId: string })
     return (
         <Alert variant="destructive">
             {isPermissionError ? <ShieldAlert className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-            <AlertTitle>{isPermissionError ? 'Error de Permisos' : 'Error al Cargar Versiones'}</AlertTitle>
+            <AlertTitle>{isPermissionError ? 'Error de Permisos de Firestore' : 'Error al Cargar Versiones'}</AlertTitle>
             <AlertDescription>
               {isPermissionError 
-                ? "No se pudieron cargar las versiones de este análisis. Revisa las reglas de seguridad de tu base de datos Firestore para asegurar que se permite la lectura de la subcolección 'versions'."
+                ? "La aplicación no tiene permiso para leer las versiones del análisis. Esto casi siempre se debe a un error en las reglas de seguridad de Firestore. Por favor, ve a la consola de Firebase y asegúrate de que tus reglas para la subcolección 'versions' permitan la lectura (allow read) si el 'userId' del documento padre coincide con el del usuario autenticado."
                 : error.message
               }
             </AlertDescription>
@@ -47,7 +48,9 @@ export default function AnalysisTimeline({ analysisId }: { analysisId: string })
     </Alert>
   );
 
-  const versions = snapshot?.docs.map(d => ({ id: d.id, ...d.data() } as AnalysisVersion));
+  const versions = snapshot?.docs
+    .map(d => ({ id: d.id, ...d.data() } as AnalysisVersion))
+    .sort((a, b) => (a.createdAt as any) - (b.createdAt as any)); // Ordenamos en el cliente
 
   return (
     <div className="space-y-4">
