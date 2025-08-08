@@ -216,20 +216,6 @@ export function ImageAnalysisUploader() {
         return;
     }
     try {
-        // Check for duplicates before saving
-        const analysesRef = collection(db, 'savedAnalyses');
-        const q = query(analysesRef, where('userId', '==', user.uid), where('content', '==', analysisText));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-            toast({
-                variant: "default",
-                title: "Análisis Duplicado",
-                description: "Este análisis ya ha sido guardado anteriormente.",
-            });
-            return;
-        }
-
         const titleMatch = analysisText.match(/Análisis Detallado de Apuestas de Valor - (.*?)\n/);
         const newAnalysis: Omit<SavedAnalysis, 'id' | 'createdAt' | 'userId'> & { userId: string } = {
             userId: user.uid,
