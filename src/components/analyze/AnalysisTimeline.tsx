@@ -11,8 +11,8 @@ import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 
 export default function AnalysisTimeline({ analysisId }: { analysisId: string }) {
   const versionsRef = collection(db, 'savedAnalyses', analysisId, 'versions');
-  // Simplificamos la consulta para evitar posibles problemas de índices compuestos.
-  // El orden se puede manejar en el cliente si es necesario, aunque onSnapshot no garantiza orden sin un orderBy.
+  // Simplificamos la consulta para evitar posibles problemas de índices compuestos que pueden causar errores de permisos si no existen.
+  // El orden se puede manejar en el cliente.
   const q = query(versionsRef, where('deleted', '!=', true));
   const [snapshot, loading, error] = useCollection(q);
 
@@ -39,7 +39,6 @@ export default function AnalysisTimeline({ analysisId }: { analysisId: string })
     );
   }
 
-
   if (snapshot?.empty) return (
     <Alert>
         <AlertCircle className="h-4 w-4" />
@@ -48,9 +47,10 @@ export default function AnalysisTimeline({ analysisId }: { analysisId: string })
     </Alert>
   );
 
+  // Ordenamos en el cliente para evitar la necesidad de un índice compuesto en Firestore.
   const versions = snapshot?.docs
     .map(d => ({ id: d.id, ...d.data() } as AnalysisVersion))
-    .sort((a, b) => (a.createdAt as any) - (b.createdAt as any)); // Ordenamos en el cliente
+    .sort((a, b) => (a.createdAt as any)?.seconds - (b.createdAt as any)?.seconds);
 
   return (
     <div className="space-y-4">
