@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, orderBy, where } from "firebase/firestore";
+import { collection, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { VersionCard } from "./VersionCard";
 import type { AnalysisVersion } from "@/lib/types/analysis";
