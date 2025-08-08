@@ -80,7 +80,6 @@ export interface SavedAnalysis {
     currentVersionId?: string;
     deleted?: boolean;
     visibility?: "private" | "public";
-    versions?: AnalysisVersion[];
 }
 
 // Represents a single version document within the 'versions' subcollection

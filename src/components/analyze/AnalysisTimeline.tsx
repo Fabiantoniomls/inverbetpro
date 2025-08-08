@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { VersionCard } from "./VersionCard";
 import type { AnalysisVersion } from "@/lib/types/analysis";
@@ -11,7 +11,8 @@ import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 
 export default function AnalysisTimeline({ analysisId }: { analysisId: string }) {
   const versionsRef = collection(db, 'savedAnalyses', analysisId, 'versions');
-  const q = query(versionsRef, orderBy('createdAt','asc'));
+  // Query to get all versions that are not soft-deleted, ordered by creation date
+  const q = query(versionsRef, where('deleted', '!=', true), orderBy('deleted', 'asc'), orderBy('createdAt','asc'));
   const [snapshot, loading, error] = useCollection(q);
 
   if (loading) return (
@@ -26,6 +27,14 @@ export default function AnalysisTimeline({ analysisId }: { analysisId: string })
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error al Cargar Versiones</AlertTitle>
         <AlertDescription>{error.message}</AlertDescription>
+    </Alert>
+  );
+
+  if (snapshot?.empty) return (
+    <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Sin Versiones</AlertTitle>
+        <AlertDescription>Este proyecto de análisis no tiene versiones visibles.</AlertDescription>
     </Alert>
   );
 

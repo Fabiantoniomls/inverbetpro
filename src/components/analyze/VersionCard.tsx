@@ -27,7 +27,8 @@ import { counterAnalysis } from '@/ai/flows/counter-analysis';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Timestamp } from 'firebase/firestore';
+import { Timestamp, doc, updateDoc, serverTimestamp, addDoc, collection } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { extractPicks } from '@/ai/flows/extract-picks';
 import { ExtractPicksModal } from './ExtractPicksModal';
 
@@ -71,6 +72,7 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
     const { toast } = useToast();
     const [isLoadingCounter, setIsLoadingCounter] = useState(false);
     const [isLoadingPicks, setIsLoadingPicks] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [showCounterInput, setShowCounterInput] = useState(false);
     const [externalAnalysis, setExternalAnalysis] = useState('');
     const [counterResult, setCounterResult] = useState<string | null>(null);
@@ -97,8 +99,28 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                 originalAnalysis: version.contentMarkdown,
                 externalAnalysis: externalAnalysis
             });
-            setCounterResult(result);
-            // Here you would create a new version in Firestore in a real scenario
+
+            // Save this as a new version
+             const versionsCollectionRef = collection(db, 'savedAnalyses', analysisId, 'versions');
+             const newVersionData = {
+                analysisId: analysisId,
+                author: "ai" as const,
+                authorId: 'iaedge-model',
+                contentMarkdown: result,
+                createdAt: serverTimestamp(),
+                type: "interpelacion" as const,
+                deleted: false,
+             };
+             await addDoc(versionsCollectionRef, newVersionData);
+
+            toast({
+                title: 'Contra-Análisis Guardado',
+                description: 'Se ha guardado una nueva versión con la opinión de "iaedge".',
+            });
+            setShowCounterInput(false);
+            setExternalAnalysis('');
+            setCounterResult(null); // The new version will appear automatically via the timeline listener
+            
         } catch (error) {
             console.error("Error fetching counter-analysis:", error);
             toast({
@@ -135,6 +157,30 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
             setIsLoadingPicks(false);
         }
     }
+    
+    const handleDeleteVersion = async () => {
+        setIsDeleting(true);
+        try {
+            const versionRef = doc(db, 'savedAnalyses', analysisId, 'versions', version.id);
+            await updateDoc(versionRef, {
+                deleted: true,
+            });
+            toast({
+                title: 'Versión Eliminada',
+                description: 'La versión del análisis ha sido eliminada (soft delete).',
+            });
+            // The timeline will update automatically
+        } catch (error) {
+            console.error("Error deleting version:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error al eliminar',
+                description: 'No se pudo eliminar la versión.',
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
 
     useEffect(() => {
@@ -142,6 +188,10 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
             counterResultRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
     }, [counterResult]);
+
+    if (version.deleted) {
+        return null;
+    }
 
     return (
         <>
@@ -156,93 +206,74 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
         )}
         <Card className="border-border/80">
             <CardHeader>
-                <CardTitle className="text-lg">Versión del Análisis ({version.type})</CardTitle>
-                <CardDescription>
-                    {version.author} - {createdAtDate ? format(createdAtDate, "d 'de' MMMM, HH:mm", { locale: es }) : 'fecha desconocida'}
-                </CardDescription>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="text-lg capitalize">Versión: {version.type}</CardTitle>
+                        <CardDescription>
+                            {version.author} - {createdAtDate ? format(createdAtDate, "d 'de' MMMM, HH:mm", { locale: es }) : 'fecha desconocida'}
+                        </CardDescription>
+                    </div>
+                     <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="text-muted-foreground" disabled={isDeleting || version.type === 'original'}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Eliminar esta versión?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta acción no se puede deshacer (marcará la versión como eliminada). La versión original no puede ser eliminada.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDeleteVersion}>
+                            Sí, eliminar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                </div>
             </CardHeader>
             <CardContent className="prose prose-sm dark:prose-invert max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                    {introduction}
+                 <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                    {version.contentMarkdown}
                 </ReactMarkdown>
-                
-                <div className="py-4">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                        {valueTableAndRecs}
-                    </ReactMarkdown>
-                </div>
-                
-                <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="item-1" className="border-none -mt-4">
-                        <AccordionTrigger className="text-sm text-primary hover:no-underline justify-start gap-1 py-2">
-                            <span>Ver Análisis Completo</span>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                {detailedAnalysis}
-                            </ReactMarkdown>
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
-                
-                <div className="mt-6 border-t pt-4">
-                    {!showCounterInput && (
-                         <Button onClick={() => setShowCounterInput(true)} variant="outline" size="sm">
-                            <ChevronsUpDown className="mr-2 h-4 w-4" />
-                            Contrastar con Análisis Externo
-                        </Button>
-                    )}
 
-                    {showCounterInput && !counterResult && (
-                        <div className="space-y-4">
-                             <Label htmlFor={`external-analysis-${version.id}`}>Pega aquí el análisis de otra fuente para obtener una respuesta crítica de "iaedge"</Label>
-                             <Textarea 
-                                id={`external-analysis-${version.id}`}
-                                value={externalAnalysis}
-                                onChange={(e) => setExternalAnalysis(e.target.value)}
-                                placeholder="Pega el texto del análisis externo aquí..."
-                                rows={8}
-                                className="text-xs"
-                             />
-                             <div className="flex gap-2">
-                                <Button onClick={handleGenerateCounterAnalysis} disabled={isLoadingCounter} size="sm">
-                                    {isLoadingCounter ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Bot className="mr-2 h-4 w-4" />
-                                    )}
-                                    Generar Contra-Análisis
+                 {version.type !== 'interpelacion' && (
+                    <>
+                        <div className="mt-6 border-t pt-4">
+                            {!showCounterInput && (
+                                <Button onClick={() => setShowCounterInput(true)} variant="outline" size="sm">
+                                    <ChevronsUpDown className="mr-2 h-4 w-4" />
+                                    Contrastar con Análisis Externo
                                 </Button>
-                                <Button onClick={() => setShowCounterInput(false)} variant="ghost" size="sm" disabled={isLoadingCounter}>Cancelar</Button>
-                             </div>
-                        </div>
-                    )}
-                </div>
+                            )}
 
-                {isLoadingCounter && !counterResult && (
-                     <div className="space-y-4 pt-4">
-                        <div className="flex items-center gap-2 text-primary">
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                            <p className="text-sm font-medium">"iaedge" está contrastando ambos análisis...</p>
+                            {showCounterInput && (
+                                <div className="space-y-4">
+                                    <Label htmlFor={`external-analysis-${version.id}`}>Pega aquí el análisis de otra fuente para obtener una respuesta crítica de "iaedge"</Label>
+                                    <Textarea 
+                                        id={`external-analysis-${version.id}`}
+                                        value={externalAnalysis}
+                                        onChange={(e) => setExternalAnalysis(e.target.value)}
+                                        placeholder="Pega el texto del análisis externo aquí..."
+                                        rows={8}
+                                        className="text-xs"
+                                    />
+                                    <div className="flex gap-2">
+                                        <Button onClick={handleGenerateCounterAnalysis} disabled={isLoadingCounter} size="sm">
+                                            {isLoadingCounter ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                            Generar y Guardar Interpelación
+                                        </Button>
+                                        <Button onClick={() => setShowCounterInput(false)} variant="ghost" size="sm" disabled={isLoadingCounter}>Cancelar</Button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <Skeleton className="h-32 w-full" />
-                    </div>
-                )}
-                
-                {counterResult && (
-                    <div className="space-y-4 pt-6 border-t mt-4" ref={counterResultRef}>
-                        <Alert variant="default" className="border-blue-500 bg-blue-500/10">
-                           <Bot className="h-4 w-4 text-blue-500" />
-                           <AlertTitle>Síntesis y Contra-Análisis por iaedge</AlertTitle>
-                           <AlertDescription>
-                               Se ha combinado tu análisis guardado con la información externa proporcionada.
-                           </AlertDescription>
-                       </Alert>
-                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                           {counterResult}
-                       </ReactMarkdown>
-                   </div>
-                )}
+                    </>
+                 )}
             </CardContent>
             <CardFooter className="flex-wrap gap-2">
                  <Button onClick={handleExtractPicks} size="sm" disabled={isLoadingPicks}>
@@ -253,28 +284,6 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                     )}
                     Extraer Picks
                  </Button>
-                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" disabled={version.type === 'original'}>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Eliminar Versión
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>¿Eliminar esta versión?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta acción no se puede deshacer. La versión original no puede ser eliminada.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => { /* TODO */ }}>
-                        Sí, eliminar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
             </CardFooter>
         </Card>
         </>
