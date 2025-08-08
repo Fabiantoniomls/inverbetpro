@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useEffect, useState, useMemo } from 'react';
@@ -13,7 +14,7 @@ import { KpiCard } from "@/components/dashboard/kpi-card";
 import { PerformanceChart, type ChartData } from "@/components/dashboard/performance-chart";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { DollarSign, Percent, Target, Hash, Scale, TrendingUp, Sparkles } from "lucide-react";
+import { DollarSign, Percent, Target, Hash, Scale, TrendingUp, Sparkles, TestTube2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -31,6 +32,19 @@ import {
 } from "@/components/ui/table"
 
 
+const mockBets: Bet[] = [
+  { id: '1', userId: 'mock', sport: 'Tenis', match: 'Carlos Alcaraz vs. Novak Djokovic', market: 'Ganador del Partido', selection: 'Carlos Alcaraz', odds: 2.1, stake: 20, status: 'Ganada', valueCalculated: 0.05, estimatedProbability: 50, profitOrLoss: 22, createdAt: new Date('2024-05-01') },
+  { id: '2', userId: 'mock', sport: 'Fútbol', match: 'Real Madrid vs. FC Barcelona', market: 'Más/Menos Goles', selection: 'Más de 2.5', odds: 1.85, stake: 25, status: 'Ganada', valueCalculated: 0.1, estimatedProbability: 60, profitOrLoss: 21.25, createdAt: new Date('2024-05-03') },
+  { id: '3', userId: 'mock', sport: 'Tenis', match: 'Iga Swiatek vs. Aryna Sabalenka', market: 'Ganador del Partido', selection: 'Aryna Sabalenka', odds: 2.5, stake: 15, status: 'Perdida', valueCalculated: -0.05, estimatedProbability: 42, profitOrLoss: -15, createdAt: new Date('2024-05-05') },
+  { id: '4', userId: 'mock', sport: 'Fútbol', match: 'Liverpool vs. Manchester City', market: 'Ambos Equipos Marcan', selection: 'Sí', odds: 1.6, stake: 30, status: 'Ganada', valueCalculated: 0.12, estimatedProbability: 65, profitOrLoss: 18, createdAt: new Date('2024-05-07') },
+  { id: '5', userId: 'mock', sport: 'Tenis', match: 'Jannik Sinner vs. Daniil Medvedev', market: 'Ganador del Partido', selection: 'Jannik Sinner', odds: 1.72, stake: 22, status: 'Ganada', valueCalculated: 0.08, estimatedProbability: 60, profitOrLoss: 15.84, createdAt: new Date('2024-05-10') },
+  { id: '6', userId: 'mock', sport: 'Fútbol', match: 'Bayern Munich vs. Borussia Dortmund', market: 'Resultado del Partido', selection: 'Bayern Munich', odds: 1.5, stake: 40, status: 'Ganada', valueCalculated: 0.05, estimatedProbability: 66, profitOrLoss: 20, createdAt: new Date('2024-05-12') },
+  { id: '7', userId: 'mock', sport: 'Tenis', match: 'Coco Gauff vs. Elena Rybakina', market: 'Ganador del Partido', selection: 'Coco Gauff', odds: 2.0, stake: 18, status: 'Perdida', valueCalculated: -0.1, estimatedProbability: 45, profitOrLoss: -18, createdAt: new Date('2024-05-15') },
+  { id: '8', userId: 'mock', sport: 'Fútbol', match: 'AC Milan vs. Inter Milan', market: 'Doble Oportunidad', selection: 'X2', odds: 1.4, stake: 50, status: 'Ganada', valueCalculated: 0.02, estimatedProbability: 70, profitOrLoss: 20, createdAt: new Date('2024-05-18') },
+  { id: '9', userId: 'mock', sport: 'Tenis', match: 'Alexander Zverev vs. Stefanos Tsitsipas', market: 'Ganador del Partido', selection: 'Alexander Zverev', odds: 1.9, stake: 20, status: 'Perdida', valueCalculated: 0.01, estimatedProbability: 52, profitOrLoss: -20, createdAt: new Date('2024-05-20') },
+  { id: '10', userId: 'mock', sport: 'Fútbol', match: 'Paris Saint-Germain vs. Olympique de Marseille', market: 'Hándicap Asiático', selection: 'PSG -1.5', odds: 2.2, stake: 15, status: 'Ganada', valueCalculated: 0.15, estimatedProbability: 50, profitOrLoss: 18, createdAt: new Date('2024-05-22') },
+];
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -38,6 +52,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [kpiSummary, setKpiSummary] = useState<string | null>(null);
   const [chartSummary, setChartSummary] = useState<string | null>(null);
+  const [isMockData, setIsMockData] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -46,19 +61,27 @@ export default function DashboardPage() {
     }
 
     setLoading(true);
+    setIsMockData(false);
     const betsRef = collection(db, 'bets');
     const q = query(betsRef, where('userId', '==', user.uid), orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const betsData = querySnapshot.docs.map(doc => {
-        const docData = doc.data();
-        return {
-          id: doc.id,
-          ...docData,
-          createdAt: (docData.createdAt as Timestamp)?.toDate() ?? new Date(),
-        } as Bet;
-      });
-      setBets(betsData);
+      if (querySnapshot.empty) {
+        // If no real data, use mock data
+        setBets(mockBets);
+        setIsMockData(true);
+      } else {
+        const betsData = querySnapshot.docs.map(doc => {
+          const docData = doc.data();
+          return {
+            id: doc.id,
+            ...docData,
+            createdAt: (docData.createdAt as Timestamp)?.toDate() ?? new Date(),
+          } as Bet;
+        });
+        setBets(betsData);
+        setIsMockData(false);
+      }
       setLoading(false);
     }, (error) => {
       console.error("Error fetching bets from Firestore:", error);
@@ -78,7 +101,6 @@ export default function DashboardPage() {
     const totalBets = bets.length;
     const avgStake = totalBets > 0 ? bets.reduce((acc, bet) => acc + bet.stake, 0) / totalBets : 0;
     const avgOdds = totalBets > 0 ? bets.reduce((acc, bet) => acc + bet.odds, 0) / totalBets : 0;
-    // Note: currentBankroll should ideally come from user settings, but we can estimate it
     const currentBankroll = 1000 + totalProfitLoss; 
 
     return {
@@ -126,7 +148,6 @@ export default function DashboardPage() {
           setKpiSummary(summary);
         } catch (error) {
            console.error("Error generating KPI summary:", error);
-           // Do not show toast for this, as it's a non-critical enhancement
         }
         
         // Chart Summary
@@ -157,7 +178,7 @@ export default function DashboardPage() {
     );
   }
   
-  if (bets.length === 0) {
+  if (bets.length === 0 && !isMockData) {
     return (
         <div className="space-y-8 text-center">
             <h1 className="text-3xl font-bold tracking-tight">Dashboard de Rendimiento</h1>
@@ -178,7 +199,17 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <h1 className="text-3xl font-bold tracking-tight">Dashboard de Rendimiento</h1>
       
-      {kpiSummary && (
+      {isMockData && (
+        <Alert variant="default" className="border-amber-500/50 bg-amber-950">
+          <TestTube2 className="h-4 w-4 text-amber-400" />
+          <AlertTitle>Modo de Demostración</AlertTitle>
+          <AlertDescription>
+            Estás viendo datos de prueba. Registra tu primera apuesta para ver tus propias estadísticas.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {kpiSummary && !isMockData && (
         <Alert>
           <Sparkles className="h-4 w-4" />
           <AlertTitle>Resumen del Coach</AlertTitle>
@@ -197,7 +228,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <div className="lg:col-span-4">
-          <PerformanceChart data={chartData} analysis={chartSummary} />
+          <PerformanceChart data={chartData} analysis={isMockData ? "Visualización del rendimiento acumulado de los datos de prueba." : chartSummary} />
         </div>
         <div className="lg:col-span-3">
             <Card>
@@ -242,3 +273,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+    
