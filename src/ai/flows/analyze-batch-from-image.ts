@@ -57,9 +57,9 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
     surface: z.string().describe("The playing surface (Hard, Clay, or Grass). This is a CRITICAL factor for tennis matches."),
   }) },
   output: { schema: z.object({
-      analysisReport: z.string().describe("Un informe de texto detallado (en formato Markdown) que explique tu razonamiento, siguiendo la estructura del ejemplo."),
-      valuePicks: z.array(PickSchema).describe("Un array de objetos, donde cada objeto representa una apuesta de valor identificada de tu análisis. DEBE rellenar todos los campos del PickSchema."),
-      mainPredictionInsights: MainPredictionInsightsSchema,
+      analysisReport: z.string().describe("Un informe de texto detallado (en formato Markdown) que explique tu razonamiento, siguiendo la estructura jerárquica estandarizada."),
+      valuePicks: z.array(PickSchema).describe("Un array de objetos, donde cada objeto representa la MEJOR apuesta de valor identificada para cada partido. DEBE rellenar todos los campos del PickSchema."),
+      mainPredictionInsights: MainPredictionInsightsSchema.optional().describe("Explainable AI (XAI) insights for the main prediction."),
   }) },
   prompt: `Eres un analista experto en inversiones deportivas de clase mundial. Tu tarea es realizar un análisis cuantitativo y cualitativo completo basado en los datos de los partidos proporcionados. Tu salida DEBE ser un único objeto JSON.
 
@@ -75,9 +75,9 @@ Genera un objeto JSON que contenga:
         *   **Veredicto**: Una viñeta con tu recomendación final para esa apuesta.
     *   **NO incluyas la Tabla de Valor en este informe de texto.**
 
-2.  **\`valuePicks\`**: Un array de objetos, donde cada objeto representa una apuesta de valor identificada. Para cada pick, rellena TODOS los siguientes campos del schema: \`sport\`, \`match\`, \`market\`, \`selection\`, \`odds\`, \`estimatedProbability\`, \`valueCalculated\`, \`confidenceScore\`, y \`keyFactors\`.
+2.  **\`valuePicks\`**: Un array de objetos. **CRÍTICO: Para cada partido, identifica y devuelve UNA ÚNICA apuesta de valor (la selección del jugador A o del jugador B que consideres mejor, pero no ambas)**. Para cada pick, rellena TODOS los siguientes campos del schema: \`sport\`, \`match\`, \`market\`, \`selection\`, \`odds\`, \`estimatedProbability\`, \`valueCalculated\`, \`confidenceScore\`, y \`keyFactors\`.
 
-3.  **\`mainPredictionInsights\`**: Un objeto con los elementos de IA Explicable para la predicción que consideres MÁS importante o con más confianza de todo el cupón.
+3.  **\`mainPredictionInsights\`**: (Opcional) Un objeto con los elementos de IA Explicable para la predicción que consideres MÁS importante de todo el cupón.
 
 Analiza los siguientes datos y genera la salida JSON completa y estructurada como se ha especificado. Para los partidos de tenis, un factor CRÍTICO es la superficie de juego: **{{{surface}}}**.
 
