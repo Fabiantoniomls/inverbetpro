@@ -12,7 +12,7 @@ import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 export default function AnalysisTimeline({ analysisId }: { analysisId: string }) {
   const versionsRef = collection(db, 'savedAnalyses', analysisId, 'versions');
   // Query to get all versions that are not soft-deleted, ordered by creation date
-  const q = query(versionsRef, where('deleted', '!=', true), orderBy('deleted', 'asc'), orderBy('createdAt','asc'));
+  const q = query(versionsRef, where('deleted', '!=', true), orderBy('createdAt','asc'));
   const [snapshot, loading, error] = useCollection(q);
 
   if (loading) return (
