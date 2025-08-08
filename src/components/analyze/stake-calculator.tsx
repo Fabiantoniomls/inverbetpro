@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Loader2, ArrowLeft, CheckCircle, Save } from "lucide-react"
@@ -8,20 +8,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { stakingCalculator, StakingCalculatorInput } from '@/ai/flows/staking-calculator';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import type { Bet } from '@/lib/types';
+import type { Bet, UserSettings } from '@/lib/types';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-
-
-// Placeholder user data. In a real app, this would be fetched for the logged-in user from firestore.
-const userData = {
-    currentBankroll: 5000,
-    preferredStakingModel: 'Kelly Fraccionario', // 'Fijo', 'Porcentual'
-    kellyFraction: 0.25, // 1/4 Kelly. Only if preferredStakingModel is 'Kelly Fraccionario'
-    fixedStakeAmount: 50, // Only if preferredStakingModel is 'Fijo'
-    percentageStakeAmount: 2 // Only if preferredStakingModel is 'Porcentual'
-} as const;
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { Skeleton } from '../ui/skeleton';
 
 
 // Saves the bet to the 'bets' collection in Firestore
@@ -45,18 +36,44 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
   const { toast } = useToast();
   const router = useRouter();
   const { user } = useAuth();
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+
+  useEffect(() => {
+    async function fetchSettings() {
+      if (!user) return;
+      try {
+        const settingsRef = doc(db, 'userSettings', user.uid, 'staking', 'config');
+        const docSnap = await getDoc(settingsRef);
+        if (docSnap.exists()) {
+          setUserSettings(docSnap.data() as UserSettings);
+        } else {
+          // Default settings could be set here if not found, or rely on Settings page to create them.
+          toast({ variant: 'destructive', title: 'Ajustes no encontrados', description: 'Por favor, ve a la página de Configuración para establecer tus preferencias de staking.' });
+        }
+      } catch (error) {
+        console.error("Error fetching user settings:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'No se pudo cargar tu configuración de staking.' });
+      }
+    }
+    fetchSettings();
+  }, [user, toast]);
+
 
   const handleCalculateStake = async () => {
+    if (!userSettings) {
+        toast({ variant: "destructive", title: "Error", description: "La configuración de usuario no está cargada." });
+        return;
+    }
     setIsLoading(true);
     try {
       const input: StakingCalculatorInput = {
         probability: stakeData.probability,
         odds: stakeData.odds,
-        currentBankroll: userData.currentBankroll,
-        preferredStakingModel: userData.preferredStakingModel,
-        ...(userData.preferredStakingModel === 'Kelly Fraccionario' && { kellyFraction: userData.kellyFraction }),
-        ...(userData.preferredStakingModel === 'Fijo' && { fixedStakeAmount: userData.fixedStakeAmount }),
-        ...(userData.preferredStakingModel === 'Porcentual' && { percentageStakeAmount: userData.percentageStakeAmount }),
+        currentBankroll: userSettings.initialBankroll, // Using initialBankroll as currentBankroll
+        preferredStakingModel: userSettings.preferredStakingModel,
+        ...(userSettings.preferredStakingModel === 'Kelly Fraccionario' && { kellyFraction: userSettings.kellyFraction }),
+        ...(userSettings.preferredStakingModel === 'Fijo' && { fixedStakeAmount: userSettings.fixedStakeAmount }),
+        ...(userSettings.preferredStakingModel === 'Porcentual' && { percentageStakeAmount: userSettings.percentageStakeAmount }),
       };
       const result = await stakingCalculator(input);
       setStake(result.recommendedStake);
@@ -124,6 +141,18 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
         setIsLoading(false);
       }
   }
+  
+    if (!userSettings) {
+        return (
+             <CardContent className="space-y-4 pt-6">
+                <div className="flex items-center space-x-2">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Cargando configuración de usuario...</span>
+                </div>
+                <Skeleton className="h-24 w-full" />
+             </CardContent>
+        )
+    }
 
   return (
     <div>
@@ -135,8 +164,8 @@ export function StakeCalculator({ stakeData, onBack }: { stakeData: { probabilit
                     <ul className="list-disc pl-5 space-y-1 mt-2">
                       <li><strong>Probabilidad Estimada:</strong> {(stakeData.probability * 100).toFixed(2)}%</li>
                       <li><strong>Cuota de Mercado:</strong> {stakeData.odds.toFixed(2)}</li>
-                      <li><strong>Bankroll Actual:</strong> ${userData.currentBankroll.toFixed(2)}</li>
-                      <li><strong>Modelo de Staking Activo:</strong> {userData.preferredStakingModel}</li>
+                      <li><strong>Bankroll Actual:</strong> ${userSettings.initialBankroll.toFixed(2)}</li>
+                      <li><strong>Modelo de Staking Activo:</strong> {userSettings.preferredStakingModel}</li>
                     </ul>
                 </AlertDescription>
             </Alert>

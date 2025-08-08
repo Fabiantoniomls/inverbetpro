@@ -35,12 +35,14 @@ export function SettingsForm() {
             if (!user) return
             setIsLoading(true)
             try {
-                const settingsRef = doc(db, 'userSettings', user.uid)
+                // Path updated to users/{uid}/settings/staking
+                const settingsRef = doc(db, 'userSettings', user.uid, 'staking', 'config')
                 const docSnap = await getDoc(settingsRef)
                 if (docSnap.exists()) {
                     setSettings(docSnap.data() as UserSettings)
                 } else {
                     // If no settings exist, initialize with defaults
+                    await setDoc(settingsRef, defaultSettings);
                     setSettings(defaultSettings)
                 }
             } catch (error) {
@@ -57,7 +59,7 @@ export function SettingsForm() {
         if (!user || !settings) return
         setIsSaving(true)
         try {
-            const settingsRef = doc(db, 'userSettings', user.uid)
+            const settingsRef = doc(db, 'userSettings', user.uid, 'staking', 'config')
             await setDoc(settingsRef, settings, { merge: true })
             toast({ title: 'Configuración Guardada', description: 'Tus preferencias han sido actualizadas.' })
         } catch (error) {
