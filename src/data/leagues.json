@@ -1,23 +1,204 @@
 
 [
   {
+    "country": "ÁFRICA",
+    "leagues": [
+      {
+        "name": "Campeonato Africano de Naciones",
+        "url": "https://www.flashscore.cl/futbol/africa/campeonato-africano-de-naciones/"
+      }
+    ]
+  },
+  {
+    "country": "ALEMANIA",
+    "leagues": [
+      {
+        "name": "2. Bundesliga",
+        "url": "https://www.flashscore.cl/futbol/alemania/2-bundesliga/"
+      },
+      {
+        "name": "3. Liga",
+        "url": "https://www.flashscore.cl/futbol/alemania/3-liga/"
+      },
+      {
+        "name": "Regionalliga Nord",
+        "url": "https://www.flashscore.cl/futbol/alemania/regionalliga-norte/"
+      },
+      {
+        "name": "Regionalliga Nordost",
+        "url": "https://www.flashscore.cl/futbol/alemania/regionalliga-nordost/"
+      },
+      {
+        "name": "Regionalliga West",
+        "url": "https://www.flashscore.cl/futbol/alemania/regionalliga-oeste/"
+      },
+      {
+        "name": "Regionalliga Südwest",
+        "url": "https://www.flashscore.cl/futbol/alemania/regionalliga-sudwest/"
+      },
+      {
+        "name": "Regionalliga Bayern",
+        "url": "https://www.flashscore.cl/futbol/alemania/regionalliga-bayern/"
+      },
+      {
+        "name": "Oberliga NOFV-Nord",
+        "url": "https://www.flashscore.cl/futbol/alemania/oberliga-nofv-nord/"
+      },
+      {
+        "name": "Oberliga NOFV-Süd",
+        "url": "https://www.flashscore.cl/futbol/alemania/oberliga-nofv-sud/"
+      },
+      {
+        "name": "Oberliga Bremen",
+        "url": "https://www.flashscore.cl/futbol/alemania/oberliga-bremen/"
+      },
+      {
+        "name": "Oberliga Niedersachsen",
+        "url": "https://www.flashscore.cl/futbol/alemania/oberliga-niedersachsen/"
+      },
+      {
+        "name": "Oberliga Westfalen",
+        "url": "https://www.flashscore.cl/futbol/alemania/oberliga-westfalen/"
+      },
+      {
+        "name": "Oberliga Rheinland-Pfalz/Saar",
+        "url": "https://www.flashscore.cl/futbol/alemania/oberliga-rheinland-pfalz-saar/"
+      },
+      {
+        "name": "Oberliga Bayern Nord",
+        "url": "https://www.flashscore.cl/futbol/alemania/oberliga-bayern-nord/"
+      },
+      {
+        "name": "Oberliga Bayern Süd",
+        "url": "https://www.flashscore.cl/futbol/alemania/oberliga-bayern-sud/"
+      },
+      {
+        "name": "Oberliga Baden-Württemberg",
+        "url": "https://www.flashscore.cl/futbol/alemania/oberliga-baden-wurttemberg/"
+      },
+      {
+        "name": "DFB Youth League",
+        "url": "https://www.flashscore.cl/futbol/alemania/dfb-youth-league/"
+      }
+    ]
+  },
+  {
+    "country": "ARGENTINA",
+    "leagues": [
+      {
+        "name": "Torneo Betano - Clausura",
+        "url": "https://www.flashscore.cl/futbol/argentina/torneo-betano/"
+      },
+      {
+        "name": "Primera B - Clausura",
+        "url": "https://www.flashscore.cl/futbol/argentina/primera-b/"
+      },
+      {
+        "name": "Primera C",
+        "url": "https://www.flashscore.cl/futbol/argentina/primera-c/"
+      },
+      {
+        "name": "División Reserva - Clausura",
+        "url": "https://www.flashscore.cl/futbol/argentina/division-reserva/"
+      },
+      {
+        "name": "Primera A Femenina - Clausura",
+        "url": "https://www.flashscore.cl/futbol/argentina/primera-a-femenina/"
+      }
+    ]
+  },
+  {
+    "country": "ASIA",
+    "leagues": [
+      {
+        "name": "ASEAN Club Championship - Clasificación",
+        "url": "https://www.flashscore.cl/futbol/asia/asean-club-championship/"
+      },
+      {
+        "name": "Copa Asiática Femenina Sub-20 AFC - Clasificación",
+        "url": "https://www.flashscore.cl/futbol/asia/copa-asiatica-femenina-sub-20-afc/"
+      }
+    ]
+  },
+  {
+    "country": "AUSTRALIA",
+    "leagues": [
+      {
+        "name": "NPL Northern NSW",
+        "url": "https://www.flashscore.cl/futbol/australia/npl-northern-nsw/"
+      },
+      {
+        "name": "NPL NSW",
+        "url": "https://www.flashscore.cl/futbol/australia/npl-nsw/"
+      },
+      {
+        "name": "NPL South Australia",
+        "url": "https://www.flashscore.cl/futbol/australia/npl-south-australia/"
+      },
+      {
+        "name": "Northern NSW State League",
+        "url": "https://www.flashscore.cl/futbol/australia/northern-nsw-state-league/"
+      },
+      {
+        "name": "NSW League One",
+        "url": "https://www.flashscore.cl/futbol/australia/nsw-league-one/"
+      },
+      {
+        "name": "Queensland Premier League",
+        "url": "https://www.flashscore.cl/futbol/australia/queensland-premier-league/"
+      },
+      {
+        "name": "Tasmania Southern Championship",
+        "url": "https://www.flashscore.cl/futbol/australia/tasmania-southern-championship/"
+      },
+      {
+        "name": "WA State League",
+        "url": "https://www.flashscore.cl/futbol/australia/wa-state-league/"
+      }
+    ]
+  },
+  {
     "country": "AUSTRIA",
     "leagues": [
       {
+        "name": "2. Liga",
+        "url": "https://www.flashscore.cl/futbol/austria/2-liga/"
+      },
+      {
+        "name": "Regionalliga East",
+        "url": "https://www.flashscore.cl/futbol/austria/regionalliga-este/"
+      },
+      {
+        "name": "Regionalliga Centrale",
+        "url": "https://www.flashscore.cl/futbol/austria/regionalliga-centrale/"
+      },
+      {
+        "name": "Regionalliga Oeste",
+        "url": "https://www.flashscore.cl/futbol/austria/regionalliga-oeste/"
+      },
+      {
+        "name": "Burgenland",
+        "url": "https://www.flashscore.cl/futbol/austria/burgenland/"
+      },
+      {
+        "name": "Karnten",
+        "url": "https://www.flashscore.cl/futbol/austria/karnten/"
+      },
+      {
         "name": "Niederosterreich",
-        "url": "https://www.flashscore.cl/futbol/austria/niederoesterreich-liga"
+        "url": "https://www.flashscore.cl/futbol/austria/niederosterreich/"
       },
       {
         "name": "Oberosterreich",
-        "url": "https://www.flashscore.cl/futbol/austria/oberoesterreich-liga"
+        "url": "https://www.flashscore.cl/futbol/austria/oberosterreich/"
       },
       {
         "name": "Salzburg",
-        "url": "https://www.flashscore.cl/futbol/austria/salzburg-regionalliga"
+        "url": "https://www.flashscore.cl/futbol/austria/salzburg/"
       },
       {
         "name": "Steiermark",
-        "url": "https://www.flashscore.cl/futbol/austria/steiermark-liga"
+        "url": "https://www.flashscore.cl/futbol/austria/steiermark/"
       }
     ]
   },
@@ -26,11 +207,11 @@
     "leagues": [
       {
         "name": "Jupiler Pro League",
-        "url": "https://www.flashscore.cl/futbol/belgica/jupiler-pro-league"
+        "url": "https://www.flashscore.cl/futbol/belgica/jupiler-pro-league/"
       },
       {
         "name": "Challenger Pro League",
-        "url": "https://www.flashscore.cl/futbol/belgica/challenger-pro-league"
+        "url": "https://www.flashscore.cl/futbol/belgica/challenger-pro-league/"
       }
     ]
   },
@@ -39,15 +220,15 @@
     "leagues": [
       {
         "name": "Vysshaya Liga",
-        "url": "https://www.flashscore.cl/futbol/bielorrusia/vysshaya-liga"
+        "url": "https://www.flashscore.cl/futbol/bielorrusia/vysshaya-liga/"
       },
       {
         "name": "Pershaya Liga",
-        "url": "https://www.flashscore.cl/futbol/bielorrusia/pershaya-liga"
+        "url": "https://www.flashscore.cl/futbol/bielorrusia/pershaya-liga/"
       },
       {
         "name": "Vysshaya Liga Femenina",
-        "url": "https://www.flashscore.cl/futbol/bielorrusia/vysshaya-liga-femenina"
+        "url": "https://www.flashscore.cl/futbol/bielorrusia/vysshaya-liga-femenina/"
       }
     ]
   },
@@ -56,7 +237,7 @@
     "leagues": [
       {
         "name": "División Profesional",
-        "url": "https://www.flashscore.cl/futbol/bolivia/division-profesional"
+        "url": "https://www.flashscore.cl/futbol/bolivia/division-profesional/"
       }
     ]
   },
@@ -65,15 +246,724 @@
     "leagues": [
       {
         "name": "Brasileirao Serie B",
-        "url": "https://www.flashscore.cl/futbol/brasil/brasileirao-serie-b"
+        "url": "https://www.flashscore.cl/futbol/brasil/brasileirao-serie-b/"
       },
       {
         "name": "Copa Paulista",
-        "url": "https://www.flashscore.cl/futbol/brasil/copa-paulista"
+        "url": "https://www.flashscore.cl/futbol/brasil/copa-paulista/"
       },
       {
         "name": "Amazonense Sub-20",
-        "url": "https://www.flashscore.cl/futbol/brasil/campeonato-amazonense-sub-20"
+        "url": "https://www.flashscore.cl/futbol/brasil/amazonense-sub-20/"
+      },
+      {
+        "name": "Carioca Sub-20 - Taça Guanabara",
+        "url": "https://www.flashscore.cl/futbol/brasil/carioca-sub-20/"
+      },
+      {
+        "name": "Cearense Sub-20",
+        "url": "https://www.flashscore.cl/futbol/brasil/cearense-sub-20/"
+      },
+      {
+        "name": "Brasileirao Femenino A2 - Playoffs",
+        "url": "https://www.flashscore.cl/futbol/brasil/brasileirao-femenino-a2/"
+      }
+    ]
+  },
+  {
+    "country": "BULGARIA",
+    "leagues": [
+      {
+        "name": "Parva liga",
+        "url": "https://www.flashscore.cl/futbol/bulgaria/parva-liga/"
+      }
+    ]
+  },
+  {
+    "country": "CHILE",
+    "leagues": [
+      {
+        "name": "Primera División Femenina",
+        "url": "https://www.flashscore.cl/futbol/chile/primera-division-femenina/"
+      }
+    ]
+  },
+  {
+    "country": "CHINA",
+    "leagues": [
+      {
+        "name": "Superliga",
+        "url": "https://www.flashscore.cl/futbol/china/superliga/"
+      }
+    ]
+  },
+  {
+    "country": "COLOMBIA",
+    "leagues": [
+      {
+        "name": "Primera A - Clausura",
+        "url": "https://www.flashscore.cl/futbol/colombia/primera-a/"
+      },
+      {
+        "name": "Primera B - Clausura",
+        "url": "https://www.flashscore.cl/futbol/colombia/primera-b/"
+      }
+    ]
+  },
+  {
+    "country": "COREA DEL SUR",
+    "leagues": [
+      {
+        "name": "K League 1",
+        "url": "https://www.flashscore.cl/futbol/corea-del-sur/k-league-1/"
+      }
+    ]
+  },
+  {
+    "country": "CROACIA",
+    "leagues": [
+      {
+        "name": "HNL",
+        "url": "https://www.flashscore.cl/futbol/croacia/hnl/"
+      }
+    ]
+  },
+  {
+    "country": "DINAMARCA",
+    "leagues": [
+      {
+        "name": "Superliga",
+        "url": "https://www.flashscore.cl/futbol/dinamarca/superliga/"
+      },
+      {
+        "name": "1.ª División",
+        "url": "https://www.flashscore.cl/futbol/dinamarca/1-division/"
+      },
+      {
+        "name": "2ª División",
+        "url": "https://www.flashscore.cl/futbol/dinamarca/2-division/"
+      }
+    ]
+  },
+  {
+    "country": "ECUADOR",
+    "leagues": [
+      {
+        "name": "Liga Pro",
+        "url": "https://www.flashscore.cl/futbol/ecuador/liga-pro/"
+      }
+    ]
+  },
+  {
+    "country": "EGIPTO",
+    "leagues": [
+      {
+        "name": "Premier League",
+        "url": "https://www.flashscore.cl/futbol/egipto/premier-league/"
+      }
+    ]
+  },
+  {
+    "country": "ESCOCIA",
+    "leagues": [
+      {
+        "name": "Championship",
+        "url": "https://www.flashscore.cl/futbol/escocia/championship/"
+      },
+      {
+        "name": "Lowland League",
+        "url": "https://www.flashscore.cl/futbol/escocia/lowland-league/"
+      }
+    ]
+  },
+  {
+    "country": "ESLOVAQUIA",
+    "leagues": [
+      {
+        "name": "2. liga",
+        "url": "https://www.flashscore.cl/futbol/eslovaquia/2-liga/"
+      },
+      {
+        "name": "3. Liga - West",
+        "url": "https://www.flashscore.cl/futbol/eslovaquia/3-liga-west/"
+      }
+    ]
+  },
+  {
+    "country": "ESLOVENIA",
+    "leagues": [
+      {
+        "name": "2. SNL",
+        "url": "https://www.flashscore.cl/futbol/eslovenia/2-snl/"
+      }
+    ]
+  },
+  {
+    "country": "ESTADOS UNIDOS",
+    "leagues": [
+      {
+        "name": "MLS Next Pro",
+        "url": "https://www.flashscore.cl/futbol/usa/mls-next-pro/"
+      },
+      {
+        "name": "NWSL",
+        "url": "https://www.flashscore.cl/futbol/usa/nwsl/"
+      }
+    ]
+  },
+  {
+    "country": "FINLANDIA",
+    "leagues": [
+      {
+        "name": "Veikkausliiga",
+        "url": "https://www.flashscore.cl/futbol/finlandia/veikkausliiga/"
+      },
+      {
+        "name": "Kakkonen - Grupo A",
+        "url": "https://www.flashscore.cl/futbol/finlandia/kakkonen-grupo-a/"
+      },
+      {
+        "name": "Kakkonen - Grupo B",
+        "url": "https://www.flashscore.cl/futbol/finlandia/kakkonen-grupo-b/"
+      },
+      {
+        "name": "Kakkonen - Grupo C",
+        "url": "https://www.flashscore.cl/futbol/finlandia/kakkonen-grupo-c/"
+      }
+    ]
+  },
+  {
+    "country": "FRANCIA",
+    "leagues": [
+      {
+        "name": "National",
+        "url": "https://www.flashscore.cl/futbol/francia/national/"
+      }
+    ]
+  },
+  {
+    "country": "GALES",
+    "leagues": [
+      {
+        "name": "Cymru Premier",
+        "url": "https://www.flashscore.cl/futbol/gales/cymru-premier/"
+      },
+      {
+        "name": "Cymru South",
+        "url": "https://www.flashscore.cl/futbol/gales/cymru-south/"
+      },
+      {
+        "name": "Cymru North",
+        "url": "https://www.flashscore.cl/futbol/gales/cymru-north/"
+      }
+    ]
+  },
+  {
+    "country": "HUNGRÍA",
+    "leagues": [
+      {
+        "name": "NB I.",
+        "url": "https://www.flashscore.cl/futbol/hungria/nb-i/"
+      }
+    ]
+  },
+  {
+    "country": "INDIA",
+    "leagues": [
+      {
+        "name": "Calcutta Premier Division",
+        "url": "https://www.flashscore.cl/futbol/india/calcutta-premier-division/"
+      },
+      {
+        "name": "Durand Cup",
+        "url": "https://www.flashscore.cl/futbol/india/durand-cup/"
+      }
+    ]
+  },
+  {
+    "country": "INDONESIA",
+    "leagues": [
+      {
+        "name": "Liga 1",
+        "url": "https://www.flashscore.cl/futbol/indonesia/liga-1/"
+      }
+    ]
+  },
+  {
+    "country": "INGLATERRA",
+    "leagues": [
+      {
+        "name": "Championship",
+        "url": "https://www.flashscore.cl/futbol/inglaterra/championship/"
+      },
+      {
+        "name": "Isthmian League Premier Division",
+        "url": "https://www.flashscore.cl/futbol/inglaterra/isthmian-league-premier-division/"
+      },
+      {
+        "name": "Professional Development League",
+        "url": "https://www.flashscore.cl/futbol/inglaterra/professional-development-league/"
+      }
+    ]
+  },
+  {
+    "country": "IRLANDA",
+    "leagues": [
+      {
+        "name": "Premier Division",
+        "url": "https://www.flashscore.cl/futbol/irlanda/premier-division/"
+      },
+      {
+        "name": "Division 1",
+        "url": "https://www.flashscore.cl/futbol/irlanda/division-1/"
+      }
+    ]
+  },
+  {
+    "country": "IRLANDA DEL NORTE",
+    "leagues": [
+      {
+        "name": "NIFL Championship",
+        "url": "https://www.flashscore.cl/futbol/irlanda-del-norte/nifl-championship/"
+      },
+      {
+        "name": "Premiership Femenina",
+        "url": "https://www.flashscore.cl/futbol/irlanda-del-norte/premiership-femenina/"
+      }
+    ]
+  },
+  {
+    "country": "ISLANDIA",
+    "leagues": [
+      {
+        "name": "Division 1",
+        "url": "https://www.flashscore.cl/futbol/islandia/division-1/"
+      },
+      {
+        "name": "Besta deild Femenina",
+        "url": "https://www.flashscore.cl/futbol/islandia/besta-deild-femenina/"
+      }
+    ]
+  },
+  {
+    "country": "ISLAS FEROE",
+    "leagues": [
+      {
+        "name": "Betri Deildin",
+        "url": "https://www.flashscore.cl/futbol/islas-feroe/betri-deildin/"
+      },
+      {
+        "name": "1. Deild",
+        "url": "https://www.flashscore.cl/futbol/islas-feroe/1-deild/"
+      }
+    ]
+  },
+  {
+    "country": "JORDANIA",
+    "leagues": [
+      {
+        "name": "Premier League",
+        "url": "https://www.flashscore.cl/futbol/jordania/premier-league/"
+      }
+    ]
+  },
+  {
+    "country": "KAZAJISTÁN",
+    "leagues": [
+      {
+        "name": "First League",
+        "url": "https://www.flashscore.cl/futbol/kazajistan/first-league/"
+      }
+    ]
+  },
+  {
+    "country": "KIRGUISTÁN",
+    "leagues": [
+      {
+        "name": "Premier Liga",
+        "url": "https://www.flashscore.cl/futbol/kyrgyzstan/premier-liga/"
+      }
+    ]
+  },
+  {
+    "country": "LETONIA",
+    "leagues": [
+      {
+        "name": "Nakotnes liga",
+        "url": "https://www.flashscore.cl/futbol/letonia/nakotnes-liga/"
+      }
+    ]
+  },
+  {
+    "country": "LITUANIA",
+    "leagues": [
+      {
+        "name": "A Lyga",
+        "url": "https://www.flashscore.cl/futbol/lituania/a-lyga/"
+      },
+      {
+        "name": "I Lyga",
+        "url": "https://www.flashscore.cl/futbol/lituania/i-lyga/"
+      }
+    ]
+  },
+  {
+    "country": "MACEDONIA DEL NORTE",
+    "leagues": [
+      {
+        "name": "1. MFL",
+        "url": "https://www.flashscore.cl/futbol/macedonia-del-norte/1-mfl/"
+      }
+    ]
+  },
+  {
+    "country": "MALASIA",
+    "leagues": [
+      {
+        "name": "Piala Sumbangsih",
+        "url": "https://www.flashscore.cl/futbol/malasia/piala-sumbangsih/"
+      }
+    ]
+  },
+  {
+    "country": "MÉXICO",
+    "leagues": [
+      {
+        "name": "Liga MX - Apertura",
+        "url": "https://www.flashscore.cl/futbol/mexico/liga-mx/"
+      },
+      {
+        "name": "Liga de Expansión MX - Apertura",
+        "url": "https://www.flashscore.cl/futbol/mexico/liga-de-expansion-mx/"
+      },
+      {
+        "name": "Liga MX U21 - Apertura",
+        "url": "https://www.flashscore.cl/futbol/mexico/liga-mx-u21/"
+      },
+      {
+        "name": "Liga MX Femenil - Apertura",
+        "url": "https://www.flashscore.cl/futbol/mexico/liga-mx-femenil/"
+      }
+    ]
+  },
+  {
+    "country": "MOLDAVIA",
+    "leagues": [
+      {
+        "name": "Liga 1",
+        "url": "https://www.flashscore.cl/futbol/moldavia/liga-1/"
+      }
+    ]
+  },
+  {
+    "country": "MUNDIAL",
+    "leagues": [
+      {
+        "name": "Amistosos Internacionales",
+        "url": "https://www.flashscore.cl/futbol/mundial/amistosos-internacionales/"
+      },
+      {
+        "name": "Amistosos de Clubs",
+        "url": "https://www.flashscore.cl/futbol/mundial/amistosos-de-clubs/"
+      },
+      {
+        "name": "NextGen Cup",
+        "url": "https://www.flashscore.cl/futbol/mundial/nextgen-cup/"
+      },
+      {
+        "name": "Amistosos de Clubs Femeninos",
+        "url": "https://www.flashscore.cl/futbol/mundial/amistosos-de-clubs-femeninos/"
+      }
+    ]
+  },
+  {
+    "country": "PAÍSES BAJOS",
+    "leagues": [
+      {
+        "name": "Eredivisie",
+        "url": "https://www.flashscore.cl/futbol/paises-bajos/eredivisie/"
+      },
+      {
+        "name": "Keuken Kampioen Divisie",
+        "url": "https://www.flashscore.cl/futbol/paises-bajos/keuken-kampioen-divisie/"
+      }
+    ]
+  },
+  {
+    "country": "PANAMÁ",
+    "leagues": [
+      {
+        "name": "LPF - Clausura",
+        "url": "https://www.flashscore.cl/futbol/panama/lpf/"
+      }
+    ]
+  },
+  {
+    "country": "PARAGUAY",
+    "leagues": [
+      {
+        "name": "Copa de Primera - Clausura",
+        "url": "https://www.flashscore.cl/futbol/paraguay/copa-de-primera/"
+      },
+      {
+        "name": "División Intermedia",
+        "url": "https://www.flashscore.cl/futbol/paraguay/division-intermedia/"
+      }
+    ]
+  },
+  {
+    "country": "PERÚ",
+    "leagues": [
+      {
+        "name": "Liga 1 - Clausura",
+        "url": "https://www.flashscore.cl/futbol/peru/liga-1/"
+      },
+      {
+        "name": "Liga 2 - Grupo Descenso",
+        "url": "https://www.flashscore.cl/futbol/peru/liga-2/"
+      }
+    ]
+  },
+  {
+    "country": "POLONIA",
+    "leagues": [
+      {
+        "name": "Ekstraklasa",
+        "url": "https://www.flashscore.cl/futbol/polonia/ekstraklasa/"
+      },
+      {
+        "name": "Division 1",
+        "url": "https://www.flashscore.cl/futbol/polonia/division-1/"
+      },
+      {
+        "name": "Division 2",
+        "url": "https://www.flashscore.cl/futbol/polonia/division-2/"
+      },
+      {
+        "name": "III Liga - Grupo I",
+        "url": "https://www.flashscore.cl/futbol/polonia/iii-liga-grupo-i/"
+      },
+      {
+        "name": "III Liga - Grupo II",
+        "url": "https://www.flashscore.cl/futbol/polonia/iii-liga-grupo-ii/"
+      },
+      {
+        "name": "III Liga - Grupo III",
+        "url": "https://www.flashscore.cl/futbol/polonia/iii-liga-grupo-iii/"
+      },
+      {
+        "name": "III Liga - Grupo IV",
+        "url": "https://www.flashscore.cl/futbol/polonia/iii-liga-grupo-iv/"
+      }
+    ]
+  },
+  {
+    "country": "PORTUGAL",
+    "leagues": [
+      {
+        "name": "Liga Portugal",
+        "url": "https://www.flashscore.cl/futbol/portugal/liga-portugal/"
+      },
+      {
+        "name": "Liga 3",
+        "url": "https://www.flashscore.cl/futbol/portugal/liga-3/"
+      }
+    ]
+  },
+  {
+    "country": "REPÚBLICA CHECA",
+    "leagues": [
+      {
+        "name": "ChNL",
+        "url": "https://www.flashscore.cl/futbol/republica-checa/chnl/"
+      },
+      {
+        "name": "3. CFL - Group A",
+        "url": "https://www.flashscore.cl/futbol/republica-checa/3-cfl-group-a/"
+      },
+      {
+        "name": "3. MSFL",
+        "url": "https://www.flashscore.cl/futbol/republica-checa/3-msfl/"
+      },
+      {
+        "name": "4. liga - Group A",
+        "url": "https://www.flashscore.cl/futbol/republica-checa/4-liga-group-a/"
+      },
+      {
+        "name": "4. liga - Group B",
+        "url": "https://www.flashscore.cl/futbol/republica-checa/4-liga-group-b/"
+      },
+      {
+        "name": "4. liga - Group D",
+        "url": "https://www.flashscore.cl/futbol/republica-checa/4-liga-group-d/"
+      },
+      {
+        "name": "4. liga - Group F",
+        "url": "https://www.flashscore.cl/futbol/republica-checa/4-liga-group-f/"
+      },
+      {
+        "name": "Jihocesky KP",
+        "url": "https://www.flashscore.cl/futbol/republica-checa/jihocesky-kp/"
+      },
+      {
+        "name": "Plzensky KP",
+        "url": "https://www.flashscore.cl/futbol/republica-checa/plzensky-kp/"
+      }
+    ]
+  },
+  {
+    "country": "REPÚBLICA DOMINICANA",
+    "leagues": [
+      {
+        "name": "LDF",
+        "url": "https://www.flashscore.cl/futbol/republica-dominicana/ldf/"
+      }
+    ]
+  },
+  {
+    "country": "RUMANÍA",
+    "leagues": [
+      {
+        "name": "Superliga",
+        "url": "https://www.flashscore.cl/futbol/rumania/superliga/"
+      },
+      {
+        "name": "Liga 2",
+        "url": "https://www.flashscore.cl/futbol/rumania/liga-2/"
+      }
+    ]
+  },
+  {
+    "country": "RUSIA",
+    "leagues": [
+      {
+        "name": "Premier League",
+        "url": "https://www.flashscore.cl/futbol/rusia/premier-league/"
+      },
+      {
+        "name": "Youth League",
+        "url": "https://www.flashscore.cl/futbol/rusia/youth-league/"
+      }
+    ]
+  },
+  {
+    "country": "SERBIA",
+    "leagues": [
+      {
+        "name": "Mozzart Bet Prva Liga",
+        "url": "https://www.flashscore.cl/futbol/serbia/mozzart-bet-prva-liga/"
+      }
+    ]
+  },
+  {
+    "country": "SIERRA LEONA",
+    "leagues": [
+      {
+        "name": "Premier League",
+        "url": "https://www.flashscore.cl/futbol/sierra-leona/premier-league/"
+      }
+    ]
+  },
+  {
+    "country": "SUECIA",
+    "leagues": [
+      {
+        "name": "División 1 - Norra",
+        "url": "https://www.flashscore.cl/futbol/suecia/division-1-norra/"
+      },
+      {
+        "name": "Division 2 - Norra Götaland",
+        "url": "https://www.flashscore.cl/futbol/suecia/division-2-norra-gotaland/"
+      },
+      {
+        "name": "Division 2 - Norra Svealand",
+        "url": "https://www.flashscore.cl/futbol/suecia/division-2-norra-svealand/"
+      },
+      {
+        "name": "Division 2 - Södra Götaland",
+        "url": "https://www.flashscore.cl/futbol/suecia/division-2-sodra-gotaland/"
+      },
+      {
+        "name": "Division 2 - Södra Svealand",
+        "url": "https://www.flashscore.cl/futbol/suecia/division-2-sodra-svealand/"
+      },
+      {
+        "name": "Division 2 - Västra Götaland",
+        "url": "https://www.flashscore.cl/futbol/suecia/division-2-vastra-gotaland/"
+      },
+      {
+        "name": "Allsvenskan - Femenina",
+        "url": "https://www.flashscore.cl/futbol/suecia/allsvenskan-femenina/"
+      }
+    ]
+  },
+  {
+    "country": "SUIZA",
+    "leagues": [
+      {
+        "name": "Challenge League",
+        "url": "https://www.flashscore.cl/futbol/suiza/challenge-league/"
+      },
+      {
+        "name": "1. Liga Grupo 2",
+        "url": "https://www.flashscore.cl/futbol/suiza/1-liga-grupo-2/"
+      }
+    ]
+  },
+  {
+    "country": "TURKMENISTÁN",
+    "leagues": [
+      {
+        "name": "Yokary Liga",
+        "url": "https://www.flashscore.cl/futbol/turkmenistan/yokary-liga/"
+      }
+    ]
+  },
+  {
+    "country": "TURQUÍA",
+    "leagues": [
+      {
+        "name": "Süper Lig",
+        "url": "https://www.flashscore.cl/futbol/turquia/super-lig/"
+      },
+      {
+        "name": "1. Lig",
+        "url": "https://www.flashscore.cl/futbol/turquia/1-lig/"
+      }
+    ]
+  },
+  {
+    "country": "UCRANIA",
+    "leagues": [
+      {
+        "name": "Premier League",
+        "url": "https://www.flashscore.cl/futbol/ucrania/premier-league/"
+      },
+      {
+        "name": "Persha Liga",
+        "url": "https://www.flashscore.cl/futbol/ucrania/persha-liga/"
+      },
+      {
+        "name": "U19 League",
+        "url": "https://www.flashscore.cl/futbol/ucrania/u19-league/"
+      }
+    ]
+  },
+  {
+    "country": "URUGUAY",
+    "leagues": [
+      {
+        "name": "Liga AUF Uruguaya - Clausura",
+        "url": "https://www.flashscore.cl/futbol/uruguay/liga-auf-uruguaya/"
+      }
+    ]
+  },
+  {
+    "country": "UZBEKISTÁN",
+    "leagues": [
+      {
+        "name": "Super League",
+        "url": "https://www.flashscore.cl/futbol/uzbekistan/super-league/"
       }
     ]
   }
