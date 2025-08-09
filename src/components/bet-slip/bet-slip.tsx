@@ -1,18 +1,19 @@
+
 "use client"
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useBetSlip } from '@/hooks/use-bet-slip';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Loader2, Trash, X, Minimize2, Maximize2 } from 'lucide-react';
+import { Trash, X, Minimize2, Maximize2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, writeBatch, doc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Bet } from '@/lib/types';
+import type { Bet, UserSettings } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -28,7 +29,29 @@ export function BetSlip() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const [userBankroll, setUserBankroll] = useState<number>(0);
   
+  useEffect(() => {
+    async function fetchBankroll() {
+      if (!user) return;
+      try {
+        // We get the bankroll from the main user profile, not settings, as it's the dynamic value
+        const userDocRef = doc(db, 'userSettings', user.uid, 'staking', 'config');
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+           const settings = docSnap.data() as UserSettings;
+           // For now, let's use the initial bankroll as the available balance.
+           // A more complex implementation would fetch the *current* bankroll.
+          setUserBankroll(settings.initialBankroll);
+        }
+      } catch (error) {
+        console.error("Error fetching bankroll:", error);
+        // Don't bother the user with a toast for this, just disable the Max button.
+      }
+    }
+    fetchBankroll();
+  }, [user]);
+
   const totalOdds = useMemo(() => picks.reduce((acc, pick) => acc * pick.odds, 1), [picks]);
   const potentialWinnings = useMemo(() => (combinedStake || 0) * totalOdds, [combinedStake, totalOdds]);
   
@@ -143,7 +166,8 @@ export function BetSlip() {
   return (
     <Card className="fixed bottom-4 right-4 z-50 flex flex-col w-96 max-h-[90vh] shadow-2xl">
         <CardHeader 
-            className="flex-row items-center justify-between p-3 bg-muted/50"
+            className="flex-row items-center justify-between p-3 bg-muted/50 cursor-pointer"
+            onClick={() => setIsMinimized(true)}
         >
             <div className="flex items-center gap-2">
                  <CardTitle className="text-sm font-semibold">
@@ -172,22 +196,20 @@ export function BetSlip() {
           <ScrollArea className="flex-grow">
             <CardContent className="p-3 space-y-2">
                 {picks.map(pick => (
-                    <div key={pick.id} className="text-sm p-2 border rounded-md relative group/selection">
-                        <div className="flex justify-between items-center mb-1">
-                            <span className="font-semibold text-primary">{pick.selection}</span>
-                            <span className="font-bold">{pick.odds.toFixed(2)}</span>
+                     <div key={pick.id} className="text-sm p-2 border rounded-md relative group/selection">
+                        <div className="flex justify-between items-start mb-1">
+                            <span className="font-semibold text-primary">{`${pick.selection} - ${pick.odds.toFixed(2)}`}</span>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-5 w-5 absolute top-1 right-1 opacity-0 group-hover/selection:opacity-100" 
+                                onClick={() => removePick(pick.id)}
+                            >
+                                <X className="h-3 w-3 text-destructive" />
+                            </Button>
                         </div>
                          <p className="text-xs text-muted-foreground">{pick.market}</p>
                          <p className="text-xs text-muted-foreground truncate">{pick.match}</p>
-
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-5 w-5 absolute top-1 right-1 opacity-0 group-hover/selection:opacity-100" 
-                            onClick={() => removePick(pick.id)}
-                        >
-                            <X className="h-3 w-3 text-destructive" />
-                        </Button>
                     </div>
                 ))}
             </CardContent>
@@ -196,16 +218,19 @@ export function BetSlip() {
           <TabsContent value="combined" className="mt-0">
               <CardFooter className="flex-col items-stretch space-y-3 border-t bg-background/95 p-3">
                 <div className="flex justify-between font-bold text-sm">
-                    <span>Cuota Total:</span>
+                    <span>{`Combinada de ${picks.length}`}</span>
                     <span>{totalOdds.toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-2">
                     <Label htmlFor="stake-combined" className="text-sm">Importe:</Label>
-                    <Input 
-                        id="stake-combined" type="number" value={combinedStake || ''}
-                        onChange={(e) => handleCombinedStakeChange(e.target.value)}
-                        placeholder="0.00" className="h-8 w-24 text-right"
-                    />
+                    <div className="flex items-center gap-1">
+                      <Input 
+                          id="stake-combined" type="number" value={combinedStake || ''}
+                          onChange={(e) => handleCombinedStakeChange(e.target.value)}
+                          placeholder="0.00" className="h-8 w-24 text-right"
+                      />
+                      <Button size="sm" variant="outline" className="h-8" onClick={() => setCombinedStake(userBankroll)} disabled={!userBankroll || userBankroll <= 0}>Máx</Button>
+                    </div>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-sm">
@@ -213,7 +238,7 @@ export function BetSlip() {
                     <span className="font-semibold text-green-400">${potentialWinnings.toFixed(2)}</span>
                 </div>
                 <Button onClick={() => handleRegisterBets('combined')} disabled={isLoading || !combinedStake || combinedStake <= 0} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Apostar ${combinedStake > 0 ? combinedStake.toFixed(2) : '0.00'}
                 </Button>
              </CardFooter>
@@ -242,7 +267,7 @@ export function BetSlip() {
                         <span className="font-semibold text-green-400">${totalSimpleWinnings.toFixed(2)}</span>
                     </div>
                    <Button onClick={() => handleRegisterBets('simple')} disabled={isLoading || totalSimpleStake <= 0} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                       {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                        Apostar ${totalSimpleStake > 0 ? totalSimpleStake.toFixed(2) : '0.00'}
                    </Button>
                </CardFooter>
@@ -251,3 +276,5 @@ export function BetSlip() {
     </Card>
   );
 }
+
+    
