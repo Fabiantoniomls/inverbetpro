@@ -12,8 +12,8 @@ import { DeconstructedAnalysisSchema } from '@/lib/types/analysis';
 
 // Input schema for the flow
 const DeconstructArgumentsInputSchema = z.object({
-    inverapuestasAnalysisText: z.string().describe("El texto del análisis generado por Inverapuestas Pro."),
-    externalAnalysisText: z.string().describe("El texto del análisis externo proporcionado por el usuario."),
+    inverapuestasAnalysis: z.string().describe("El texto del análisis generado por Inverapuestas Pro."),
+    externalAnalysis: z.string().describe("El texto del análisis externo proporcionado por el usuario."),
 });
 export type DeconstructArgumentsInput = z.infer<typeof DeconstructArgumentsInputSchema>;
 
@@ -45,8 +45,8 @@ Devuelve tu resultado como un único objeto JSON estructurado con las claves \`i
 Textos de Análisis:
 \`\`\`json
 {
-  "inverapuestasAnalysisText": "{{{inverapuestasAnalysisText}}}",
-  "externalAnalysisText": "{{{externalAnalysisText}}}"
+  "inverapuestasAnalysis": "{{{inverapuestasAnalysis}}}",
+  "externalAnalysis": "{{{externalAnalysis}}}"
 }
 \`\`\`
 `,

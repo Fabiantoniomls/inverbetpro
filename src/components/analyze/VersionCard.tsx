@@ -78,8 +78,8 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
         try {
             // Step 1: Deconstruct both analyses into logical components
             const deconstructedData = await deconstructArguments({
-                inverapuestasAnalysisText: version.contentMarkdown,
-                externalAnalysisText: externalAnalysis,
+                inverapuestasAnalysis: version.contentMarkdown,
+                externalAnalysis: externalAnalysis,
             });
 
             // Step 2: Pass the structured data to the counter-analysis flow
