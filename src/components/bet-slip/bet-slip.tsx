@@ -14,6 +14,7 @@ import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore
 import { db } from '@/lib/firebase';
 import type { Bet } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import { Label } from '@/components/ui/label';
 
 export function BetSlip() {
   const { picks, removePick, clearSlip } = useBetSlip();
