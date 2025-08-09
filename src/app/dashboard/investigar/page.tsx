@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import leaguesData from '@/data/leagues.json';
 import { ArrowRight, Trophy, Flame } from "lucide-react";
 import Image from 'next/image';
+import { FeaturedMatchesTable, type Market } from "@/components/investigate/FeaturedMatchesTable";
 
 
 interface League {
@@ -42,6 +43,24 @@ const popularTournaments = [
     { name: "National Bank Open", location: "Toronto, Canada", dataAiHint: "tennis court" },
     { name: "US Open", location: "New York, USA", dataAiHint: "tennis usopen" },
 ];
+
+const featuredMatches: Market[] = [
+  { match: "Casper Ruud vs Arthur Rinderknech", odds1: 1.45, odds2: 2.95, selection1: "Casper Ruud", selection2: "Arthur Rinderknech" },
+  { match: "Benjamin Bonzi vs Lorenzo Musetti", odds1: 3.20, odds2: 1.39, selection1: "Benjamin Bonzi", selection2: "Lorenzo Musetti" },
+  { match: "Roman Safiullin vs Holger Rune", odds1: 3.30, odds2: 1.37, selection1: "Roman Safiullin", selection2: "Holger Rune" },
+  { match: "Alex Michelsen vs Corentin Moutet", odds1: 1.90, odds2: 1.98, selection1: "Alex Michelsen", selection2: "Corentin Moutet" },
+  { match: "Pedro Martinez Portero vs Tommy Paul", odds1: 7.80, odds2: 1.11, selection1: "Pedro Martinez Portero", selection2: "Tommy Paul" },
+  { match: "Tomas Martin Etcheverry vs Felix Auger Aliassime", odds1: 3.00, odds2: 1.44, selection1: "Tomas Martin Etcheverry", selection2: "Felix Auger Aliassime" },
+  { match: "Stefanos Tsitsipas vs Fabian Marozsan", odds1: 1.91, odds2: 1.98, selection1: "Stefanos Tsitsipas", selection2: "Fabian Marozsan" },
+  { match: "Chak Lam Coleman Wong vs Ugo Humbert", odds1: 2.67, odds2: 1.53, selection1: "Chak Lam Coleman Wong", selection2: "Ugo Humbert" },
+  { match: "Jannik Sinner vs Daniel Elahi Galan Riveros", odds1: 1.01, odds2: 24.00, selection1: "Jannik Sinner", selection2: "Daniel Elahi Galan Riveros" },
+  { match: "Tomas Machac vs Adrian Mannarino", odds1: 1.57, odds2: 2.52, selection1: "Tomas Machac", selection2: "Adrian Mannarino" },
+  { match: "Sebastian Baez vs Gabriel Diallo", odds1: 4.40, odds2: 1.25, selection1: "Sebastian Baez", selection2: "Gabriel Diallo" },
+  { match: "Alejandro Davidovich Fokina vs Joao Fonseca", odds1: 1.70, odds2: 2.27, selection1: "Alejandro Davidovich Fokina", selection2: "Joao Fonseca" },
+  { match: "Zizou Bergs vs Lorenzo Sonego", odds1: 2.25, odds2: 1.70, selection1: "Zizou Bergs", selection2: "Lorenzo Sonego" },
+  { match: "Terence Atmane vs Flavio Cobolli", odds1: 3.95, odds2: 1.29, selection1: "Terence Atmane", selection2: "Flavio Cobolli" },
+  { match: "Frances Tiafoe vs Roberto Carballes Baena", odds1: 1.22, odds2: 4.80, selection1: "Frances Tiafoe", selection2: "Roberto Carballes Baena" },
+]
 
 
 export default function InvestigatePage() {
@@ -139,6 +158,21 @@ export default function InvestigatePage() {
                                 <p className="text-xs text-muted-foreground">{tournament.location}</p>
                             </div>
                         ))}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <Trophy className="h-6 w-6 text-primary"/>
+                            <CardTitle>Partidos Destacados del Día</CardTitle>
+                        </div>
+                        <CardDescription>
+                            Mercados y cuotas para los partidos más relevantes de la jornada.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <FeaturedMatchesTable data={featuredMatches} />
                     </CardContent>
                 </Card>
 
