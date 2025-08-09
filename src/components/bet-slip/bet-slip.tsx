@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash, X, Minimize2, Maximize2, Loader2 } from 'lucide-react';
+import { Trash, X, Minimize2, Maximize2, Loader2, Futbol, TennisBall } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 export function BetSlip() {
@@ -140,6 +141,12 @@ export function BetSlip() {
     }
   }
 
+  const SportIcon = ({ sport }: { sport: 'Fútbol' | 'Tenis' }) => {
+    if (sport === 'Fútbol') return <Futbol className="h-4 w-4 text-muted-foreground" />;
+    if (sport === 'Tenis') return <TennisBall className="h-4 w-4 text-muted-foreground" />;
+    return null;
+  };
+
   if (picks.length === 0) {
     return null;
   }
@@ -164,6 +171,7 @@ export function BetSlip() {
   }
 
   return (
+    <TooltipProvider>
     <Card className="fixed bottom-4 right-4 z-50 flex flex-col w-96 max-h-[90vh] shadow-2xl">
         <CardHeader 
             className="flex-row items-center justify-between p-3 bg-muted/50 cursor-pointer"
@@ -177,12 +185,26 @@ export function BetSlip() {
                  </CardTitle>
             </div>
             <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); clearSlip(); }}>
-                    <Trash className="h-4 w-4 text-muted-foreground" title="Vaciar cupón" />
-                </Button>
-                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}>
-                    <Minimize2 className="h-4 w-4 text-muted-foreground" title="Minimizar" />
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); clearSlip(); }}>
+                            <Trash className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                        <p>Vaciar cupón</p>
+                    </TooltipContent>
+                </Tooltip>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}>
+                            <Minimize2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                        <p>Minimizar</p>
+                    </TooltipContent>
+                </Tooltip>
             </div>
         </CardHeader>
         
@@ -208,7 +230,10 @@ export function BetSlip() {
                             </Button>
                         </div>
                          <p className="text-xs text-muted-foreground">{pick.market}</p>
-                         <p className="text-xs text-muted-foreground truncate">{pick.match}</p>
+                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <SportIcon sport={pick.sport} />
+                            <p className="truncate">{pick.match}</p>
+                         </div>
                     </div>
                 ))}
             </CardContent>
@@ -273,5 +298,6 @@ export function BetSlip() {
           </TabsContent>
         </Tabs>
     </Card>
+    </TooltipProvider>
   );
 }
