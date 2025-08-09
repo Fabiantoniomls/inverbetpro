@@ -10,7 +10,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { Settings2 } from "lucide-react"
+import { Settings2, PlusCircle } from "lucide-react"
 
 import {
   Table,
@@ -24,60 +24,74 @@ import {
 import type { Pick } from "@/lib/types/analysis"
 import { DataTableColumnHeader } from "../history/data-table-column-header"
 import { Button } from "../ui/button"
+import { useBetSlip } from "@/hooks/use-bet-slip"
+import { cn } from "@/lib/utils"
 
 
-export const columns: ColumnDef<Pick>[] = [
-  {
-    accessorKey: "match",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Partido" />,
-    cell: ({ row }) => {
-      return (
-        <div className="flex flex-col">
-          <span className="font-medium max-w-[300px] truncate">{row.original.match}</span>
-           <span className="text-sm text-muted-foreground">{row.original.selection}</span>
-        </div>
-      )
-    },
-    enableSorting: false,
-  },
-  {
-    accessorKey: "odds",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Cuota" />,
-    cell: ({ row }) => row.original.odds.toFixed(2),
-  },
-   {
-    accessorKey: "estimatedProbability",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Prob. Estimada (%)" />,
-    cell: ({ row }) => {
-        const value = row.original.estimatedProbability;
-        if (value === undefined) return '-';
-        return <span>{value.toFixed(1)}%</span>
-    },
-  },
-    {
-    accessorKey: "valueCalculated",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Valor Calculado (%)" />,
-    cell: ({ row }) => {
-        const value = row.original.valueCalculated;
-        if (value === undefined) return '-';
-        const color = value > 0 ? 'text-green-400' : 'text-red-400';
-        return <span className={`font-bold ${color}`}>{value > 0 ? `+${(value * 100).toFixed(1)}%` : `${(value * 100).toFixed(1)}%`}</span>
-    },
-  },
-]
-
-
-interface ValueBetsTableProps {
-  data: Pick[]
-}
-
-export function ValueBetsTable({ data }: ValueBetsTableProps) {
+export function ValueBetsTable({ data }: { data: Pick[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([
      {
       id: "valueCalculated",
       desc: true,
     },
   ])
+  const { addPick, picks: selectedPicks } = useBetSlip();
+
+  const isPickSelected = (pick: Pick) => selectedPicks.some(p => p.id === pick.id);
+
+  const columns: ColumnDef<Pick>[] = [
+    {
+      accessorKey: "match",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Partido" />,
+      cell: ({ row }) => {
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium max-w-[300px] truncate">{row.original.match}</span>
+             <span className="text-sm text-muted-foreground">{row.original.selection}</span>
+          </div>
+        )
+      },
+      enableSorting: false,
+    },
+    {
+      accessorKey: "odds",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Cuota" />,
+      cell: ({ row }) => {
+        const pick = row.original;
+        const isSelected = isPickSelected(pick);
+        return (
+           <Button 
+                variant={isSelected ? "secondary" : "outline"} 
+                size="sm" 
+                onClick={() => addPick(pick)}
+                className={cn("w-24", isSelected && "border-primary")}
+            >
+                {!isSelected && <PlusCircle className="mr-2 h-4 w-4"/>}
+                {pick.odds.toFixed(2)}
+            </Button>
+        )
+      },
+    },
+     {
+      accessorKey: "estimatedProbability",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Prob. Estimada (%)" />,
+      cell: ({ row }) => {
+          const value = row.original.estimatedProbability;
+          if (value === undefined) return '-';
+          return <span>{value.toFixed(1)}%</span>
+      },
+    },
+      {
+      accessorKey: "valueCalculated",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Valor Calculado (%)" />,
+      cell: ({ row }) => {
+          const value = row.original.valueCalculated;
+          if (value === undefined) return '-';
+          const color = value > 0 ? 'text-green-400' : 'text-red-400';
+          return <span className={`font-bold ${color}`}>{value > 0 ? `+${(value * 100).toFixed(1)}%` : `${(value * 100).toFixed(1)}%`}</span>
+      },
+    },
+  ]
 
   const table = useReactTable({
     data,
@@ -92,12 +106,6 @@ export function ValueBetsTable({ data }: ValueBetsTableProps) {
 
   return (
     <div className="space-y-4">
-        <div className="flex justify-end">
-            <Button variant="outline" size="sm">
-                <Settings2 className="mr-2 h-4 w-4" />
-                Configurar Tabla
-            </Button>
-        </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -124,6 +132,7 @@ export function ValueBetsTable({ data }: ValueBetsTableProps) {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={cn(isPickSelected(row.original) && "bg-muted/50")}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

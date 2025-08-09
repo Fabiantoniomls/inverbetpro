@@ -26,6 +26,8 @@ export type AnalyzeBatchFromImageInput = z.infer<typeof AnalyzeBatchFromImageInp
 
 
 export const PickSchema = z.object({
+  // Adding a unique ID to each pick to help with selection management in the bet slip
+  id: z.string().default(() => crypto.randomUUID()),
   sport: z.enum(['Fútbol', 'Tenis']),
   match: z.string(),
   market: z.string(),
