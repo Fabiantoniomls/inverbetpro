@@ -6,9 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import leaguesData from '@/data/leagues.json';
-import { ArrowRight, Trophy, Flame, Newspaper } from "lucide-react";
+import { ArrowRight, Trophy, Flame } from "lucide-react";
 import Image from 'next/image';
-import { FeaturedMarketsTable, type Market } from '@/components/investigate/FeaturedMarketsTable';
 
 
 interface League {
@@ -42,28 +41,6 @@ const popularTournaments = [
     { name: "Wimbledon", location: "London, Great Britain", dataAiHint: "tennis grass" },
     { name: "National Bank Open", location: "Toronto, Canada", dataAiHint: "tennis court" },
     { name: "US Open", location: "New York, USA", dataAiHint: "tennis usopen" },
-];
-
-const featuredMarkets: Market[] = [
-  { match: "Benjamin Bonzi - Lorenzo Musetti", market: "Total de Aces -", selection: "15+", odds1: 3.00, odds2: 3.25 },
-  { match: "Benjamin Bonzi - Lorenzo Musetti", market: "Apuesta de Set -", selection: "1-2", odds1: 3.65, odds2: 3.95 },
-  { match: "Roman Safiullin - Holger Rune", market: "Apuesta de Set -", selection: "1-2", odds1: 3.70, odds2: 4.00 },
-  { match: "Roman Safiullin - Holger Rune", market: "Total de Tie Breaks -", selection: "Más 0.5", odds1: 2.15, odds2: 2.32 },
-  { match: "Pedro Martinez Portero - Tommy Paul", market: "Apuesta de Set -", selection: "1-2", odds1: 4.15, odds2: 4.50 },
-  { match: "Pedro Martinez Portero - Tommy Paul", market: "Total de Tie Breaks -", selection: "Más 0.5", odds1: 3.10, odds2: 3.35 },
-  { match: "Tomas Martin Etcheverry - Felix Auger Aliassime", market: "Total de Aces -", selection: "Tomas Martin Etcheverry : 9+", odds1: 2.77, odds2: 3.00 },
-  { match: "Tomas Martin Etcheverry - Felix Auger Aliassime", market: "Apuesta de Set -", selection: "1-2", odds1: 3.70, odds2: 4.00 },
-  { match: "Stefanos Tsitsipas - Fabian Marozsan", market: "Total de Aces -", selection: "Stefanos Tsitsipas : 12+", odds1: 2.52, odds2: 2.72 },
-  { match: "Stefanos Tsitsipas - Fabian Marozsan", market: "Apuesta de Set -", selection: "2-1", odds1: 4.10, odds2: 4.45 },
-  { match: "Jannik Sinner - Daniel Elahi Galan Riveros", market: "Apuesta de Set -", selection: "2-1", odds1: 6.20, odds2: 6.70 },
-  { match: "Jannik Sinner - Daniel Elahi Galan Riveros", market: "Total de Tie Breaks -", selection: "Más 0.5", odds1: 5.00, odds2: 5.40 },
-  { match: "Tomas Machac - Adrian Mannarino", market: "Total de Aces -", selection: "17+", odds1: 2.65, odds2: 2.87 },
-  { match: "Tomas Machac - Adrian Mannarino", market: "Apuesta de Set -", selection: "2-1", odds1: 3.75, odds2: 4.05 },
-  { match: "Sebastian Baez - Gabriel Diallo", market: "Apuesta de Set -", selection: "1-2", odds1: 3.70, odds2: 4.00 },
-  { match: "Sebastian Baez - Gabriel Diallo", market: "Total de Tie Breaks -", selection: "Más 0.5", odds1: 2.20, odds2: 2.37 },
-  { match: "Iga Swiatek - Anastasia Potapova", market: "Total de Aces -", selection: "8+", odds1: 2.40, odds2: 2.60 },
-  { match: "Iga Swiatek - Anastasia Potapova", market: "Apuesta de Set -", selection: "2 - 1", odds1: 4.70, odds2: 5.10 },
-  { match: "Tatjana Maria - Marta Kostyuk", market: "Apuesta de Set -", selection: "1 - 2", odds1: 3.80, odds2: 4.10 },
 ];
 
 
@@ -162,21 +139,6 @@ export default function InvestigatePage() {
                                 <p className="text-xs text-muted-foreground">{tournament.location}</p>
                             </div>
                         ))}
-                    </CardContent>
-                </Card>
-
-                 <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <Newspaper className="h-6 w-6 text-primary"/>
-                            <CardTitle>Mercados Destacados del Día</CardTitle>
-                        </div>
-                        <CardDescription>
-                           Una selección de mercados y cuotas para los partidos de mañana.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <FeaturedMarketsTable data={featuredMarkets} />
                     </CardContent>
                 </Card>
 
