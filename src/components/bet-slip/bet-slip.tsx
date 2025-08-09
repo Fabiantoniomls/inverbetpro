@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash, X, Minimize2, Maximize2 } from 'lucide-react';
+import { Trash, X, Minimize2, Maximize2, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -167,9 +167,8 @@ export function BetSlip() {
     <Card className="fixed bottom-4 right-4 z-50 flex flex-col w-96 max-h-[90vh] shadow-2xl">
         <CardHeader 
             className="flex-row items-center justify-between p-3 bg-muted/50 cursor-pointer"
-            onClick={() => setIsMinimized(true)}
         >
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" onClick={() => setIsMinimized(true)}>
                  <CardTitle className="text-sm font-semibold">
                     {`Cupón (${picks.length})`}
                     {picks.length > 1 && (
@@ -276,5 +275,3 @@ export function BetSlip() {
     </Card>
   );
 }
-
-    
