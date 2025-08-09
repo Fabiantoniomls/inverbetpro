@@ -8,3 +8,6 @@ beautifulsoup4
 # Para la interacción con la base de datos de Google Cloud Firestore
 google-cloud-firestore
 firebase-admin
+
+# Para ejecutar la función en el entorno de Google Cloud
+functions-framework
