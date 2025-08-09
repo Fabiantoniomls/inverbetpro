@@ -1,0 +1,80 @@
+
+[
+  {
+    "country": "AUSTRIA",
+    "leagues": [
+      {
+        "name": "Niederosterreich",
+        "url": "https://www.flashscore.cl/futbol/austria/niederoesterreich-liga"
+      },
+      {
+        "name": "Oberosterreich",
+        "url": "https://www.flashscore.cl/futbol/austria/oberoesterreich-liga"
+      },
+      {
+        "name": "Salzburg",
+        "url": "https://www.flashscore.cl/futbol/austria/salzburg-regionalliga"
+      },
+      {
+        "name": "Steiermark",
+        "url": "https://www.flashscore.cl/futbol/austria/steiermark-liga"
+      }
+    ]
+  },
+  {
+    "country": "BÉLGICA",
+    "leagues": [
+      {
+        "name": "Jupiler Pro League",
+        "url": "https://www.flashscore.cl/futbol/belgica/jupiler-pro-league"
+      },
+      {
+        "name": "Challenger Pro League",
+        "url": "https://www.flashscore.cl/futbol/belgica/challenger-pro-league"
+      }
+    ]
+  },
+  {
+    "country": "BIELORRUSIA",
+    "leagues": [
+      {
+        "name": "Vysshaya Liga",
+        "url": "https://www.flashscore.cl/futbol/bielorrusia/vysshaya-liga"
+      },
+      {
+        "name": "Pershaya Liga",
+        "url": "https://www.flashscore.cl/futbol/bielorrusia/pershaya-liga"
+      },
+      {
+        "name": "Vysshaya Liga Femenina",
+        "url": "https://www.flashscore.cl/futbol/bielorrusia/vysshaya-liga-femenina"
+      }
+    ]
+  },
+  {
+    "country": "BOLIVIA",
+    "leagues": [
+      {
+        "name": "División Profesional",
+        "url": "https://www.flashscore.cl/futbol/bolivia/division-profesional"
+      }
+    ]
+  },
+  {
+    "country": "BRASIL",
+    "leagues": [
+      {
+        "name": "Brasileirao Serie B",
+        "url": "https://www.flashscore.cl/futbol/brasil/brasileirao-serie-b"
+      },
+      {
+        "name": "Copa Paulista",
+        "url": "https://www.flashscore.cl/futbol/brasil/copa-paulista"
+      },
+      {
+        "name": "Amazonense Sub-20",
+        "url": "https://www.flashscore.cl/futbol/brasil/campeonato-amazonense-sub-20"
+      }
+    ]
+  }
+]
