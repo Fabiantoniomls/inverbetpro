@@ -14,8 +14,19 @@ def extract_daily_tennis_matches(url: str) -> list[dict]:
     match_data = []
     
     with sync_playwright() as p:
-        # Se recomienda configurar un proxy para producción
-        # proxy_config = {"server": "http://<proxy_host>:<proxy_port>"}
+        # --- Configuración de Proxy ---
+        # Las credenciales reales deben gestionarse de forma segura, por ejemplo, con Google Secret Manager.
+        # PROXY_SERVER = "http://<proxy_provider_endpoint>:<port>"
+        # PROXY_USERNAME = "<username>"
+        # PROXY_PASSWORD = "<password>"
+        # proxy_config = {
+        #     "server": PROXY_SERVER,
+        #     "username": PROXY_USERNAME,
+        #     "password": PROXY_PASSWORD
+        # }
+        
+        # Lanzar el navegador, opcionalmente con la configuración de proxy.
+        # browser = p.chromium.launch(headless=True, proxy=proxy_config)
         browser = p.chromium.launch(headless=True) # headless=False para depuración visual
         page = browser.new_page()
 
