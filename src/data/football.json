@@ -1,0 +1,11 @@
+[
+  {
+    "team": "Manchester City",
+    "xG_home": 2.3,
+    "xG_away": 1.9,
+    "recentForm": ["W", "W", "D", "W", "L"],
+    "goalsFor": 85,
+    "goalsAgainst": 28,
+    "homeAdvantage": 0.15
+  }
+]

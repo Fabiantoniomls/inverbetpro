@@ -1,0 +1,12 @@
+[
+  {
+    "player": "Novak Djokovic",
+    "surfaceStats": {
+      "Clay": { "matches": 300, "wins": 260, "losses": 40 },
+      "Hard": { "matches": 400, "wins": 350, "losses": 50 },
+      "Grass": { "matches": 100, "wins": 90, "losses": 10 }
+    },
+    "tieBreakRecord": { "played": 150, "won": 110, "lost": 40 },
+    "recentForm": ["W", "W", "L", "W", "W"]
+  }
+]
