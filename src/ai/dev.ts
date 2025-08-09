@@ -1,3 +1,4 @@
+
 'use server';
 import { config } from 'dotenv';
 config();
@@ -17,3 +18,4 @@ import '@/ai/flows/streak-message.ts';
 import '@/ai/flows/onboarding-coach.ts';
 import '@/ai/flows/inactive-analysis-reminder.ts';
 import '@/ai/flows/weekly-summary-notification.ts';
+import '@/ai/flows/research-assistant.ts';

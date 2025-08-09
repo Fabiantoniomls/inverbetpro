@@ -1,8 +1,9 @@
+
 'use client'
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { BrainCircuit, History, Home, LogOut, Archive, Settings } from 'lucide-react'
+import { BrainCircuit, History, Home, LogOut, Archive, Settings, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -13,6 +14,7 @@ const navItems = [
   { href: '/dashboard/analyze', icon: BrainCircuit, label: 'Analizar Apuesta' },
   { href: '/dashboard/history', icon: History, label: 'Historial' },
   { href: '/dashboard/saved-analyses', icon: Archive, label: 'Análisis Guardados' },
+  { href: '/dashboard/investigar', icon: Search, label: 'Investigar' },
   { href: '/dashboard/settings', icon: Settings, label: 'Configuración' },
 ]
 
