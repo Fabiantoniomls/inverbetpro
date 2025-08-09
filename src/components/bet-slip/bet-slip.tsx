@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash, X, Minimize2, Maximize2, Loader2, Futbol, TennisBall } from 'lucide-react';
+import { Trash, X, Minimize2, Maximize2, Loader2, Football, TennisBall } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -142,7 +142,7 @@ export function BetSlip() {
   }
 
   const SportIcon = ({ sport }: { sport: 'Fútbol' | 'Tenis' }) => {
-    if (sport === 'Fútbol') return <Futbol className="h-4 w-4 text-muted-foreground" />;
+    if (sport === 'Fútbol') return <Football className="h-4 w-4 text-muted-foreground" />;
     if (sport === 'Tenis') return <TennisBall className="h-4 w-4 text-muted-foreground" />;
     return null;
   };
@@ -219,7 +219,7 @@ export function BetSlip() {
                 {picks.map(pick => (
                      <div key={pick.id} className="text-sm p-2 border rounded-md relative group/selection">
                         <div className="flex justify-between items-start mb-1">
-                            <span className="font-semibold text-primary">{`${pick.selection} - ${pick.odds.toFixed(2)}`}</span>
+                           <span className="font-semibold text-primary">{`${pick.selection} - ${pick.odds.toFixed(2)}`}</span>
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
