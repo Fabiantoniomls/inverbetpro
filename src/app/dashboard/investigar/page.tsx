@@ -30,6 +30,19 @@ const popularLeagues = [
     { name: "Ligue 1", country: "Francia", url: "https://www.flashscore.cl/futbol/francia/ligue-1/", logo: "/logos/ligue-1.png", dataAiHint: "soccer france" },
 ];
 
+const popularTournaments = [
+    { name: "Australian Open", location: "Melbourne, Australia", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/154-2025/tipo/1", dataAiHint: "tennis court" },
+    { name: "BNP Paribas Open", location: "Indian Wells, USA", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/411-2025/tipo/1", dataAiHint: "tennis hard" },
+    { name: "Miami Open", location: "Miami, USA", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/713-2025/tipo/1", dataAiHint: "tennis miami" },
+    { name: "Rolex Monte-Carlo Masters", location: "Monte-Carlo, Monaco", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/42-2025/tipo/1", dataAiHint: "tennis clay" },
+    { name: "Mutua Madrid Open", location: "Madrid, Spain", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/413-2025/tipo/1", dataAiHint: "tennis madrid" },
+    { name: "Internazionali BNL d'Italia", location: "Rome, Italy", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/414-2025/tipo/1", dataAiHint: "tennis rome" },
+    { name: "Roland Garros", location: "Paris, France", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/172-2025/tipo/1", dataAiHint: "tennis paris" },
+    { name: "Wimbledon", location: "London, Great Britain", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/188-2025/tipo/1", dataAiHint: "tennis grass" },
+    { name: "National Bank Open", location: "Toronto, Canada", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/421-2025/tipo/1", dataAiHint: "tennis court" },
+    { name: "US Open", location: "New York, USA", url: "https://www.espn.cl/tenis/resultados/torneo/_/idEvento/188-2025/tipo/1", dataAiHint: "tennis usopen" }, // Note: US Open link might need correction if ESPN changes it
+];
+
 
 export default function InvestigatePage() {
   const [sport, setSport] = useState<'football' | 'tennis'>('football');
@@ -64,7 +77,6 @@ export default function InvestigatePage() {
                         {popularLeagues.map((league) => (
                              <Link href={league.url} target="_blank" rel="noopener noreferrer" key={league.name}>
                                 <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col items-center justify-center text-center h-full">
-                                    {/* Placeholder for logo - using a simple div for now */}
                                     <div className="w-16 h-16 mb-4 relative">
                                         <Image src={`https://placehold.co/64x64.png`} data-ai-hint={league.dataAiHint} alt={`${league.name} logo`} width={64} height={64} className="object-contain" />
                                     </div>
@@ -109,16 +121,29 @@ export default function InvestigatePage() {
                 </Card>
             </TabsContent>
 
-             <TabsContent value="tennis" className="mt-6">
+            <TabsContent value="tennis" className="mt-6 space-y-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Investigación de Tenis</CardTitle>
+                        <div className="flex items-center gap-3">
+                            <Flame className="h-6 w-6 text-primary"/>
+                            <CardTitle>Circuito ATP Principal</CardTitle>
+                        </div>
                         <CardDescription>
-                            Próximamente: Explora el circuito ATP y WTA, estadísticas de jugadores y más.
+                            Acceso rápido a los torneos más importantes del tenis mundial.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">Esta sección está en desarrollo.</p>
+                    <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                        {popularTournaments.map((tournament) => (
+                             <Link href={tournament.url} target="_blank" rel="noopener noreferrer" key={tournament.name}>
+                                <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col items-center justify-center text-center h-full">
+                                    <div className="w-16 h-16 mb-4 relative">
+                                        <Image src={`https://placehold.co/64x64.png`} data-ai-hint={tournament.dataAiHint} alt={`${tournament.name} logo`} width={64} height={64} className="object-contain" />
+                                    </div>
+                                    <p className="font-semibold text-sm">{tournament.name}</p>
+                                    <p className="text-xs text-muted-foreground">{tournament.location}</p>
+                                </div>
+                             </Link>
+                        ))}
                     </CardContent>
                 </Card>
             </TabsContent>
