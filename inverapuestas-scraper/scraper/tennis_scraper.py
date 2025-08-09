@@ -6,6 +6,14 @@ import random
 from playwright.sync_api import sync_playwright, Page, TimeoutError
 from bs4 import BeautifulSoup
 
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+]
+
 def extract_daily_tennis_matches(url: str) -> list[dict]:
     """
     Navega a la URL de partidos de tenis, espera a que el contenido dinámico cargue,
@@ -28,7 +36,7 @@ def extract_daily_tennis_matches(url: str) -> list[dict]:
         # Lanzar el navegador, opcionalmente con la configuración de proxy.
         # browser = p.chromium.launch(headless=True, proxy=proxy_config)
         browser = p.chromium.launch(headless=True) # headless=False para depuración visual
-        page = browser.new_page()
+        page = browser.new_page(user_agent=random.choice(USER_AGENTS))
 
         try:
             print(f"Navegando a {url}...")
