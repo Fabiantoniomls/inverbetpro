@@ -5,6 +5,7 @@ import time
 import random
 from playwright.sync_api import sync_playwright, Page, TimeoutError
 from bs4 import BeautifulSoup
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
@@ -13,6 +14,12 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:107.0) Gecko/20100101 Firefox/107.0",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
 ]
+
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+def go_to_page_with_retries(page: Page, url: str):
+    """Navega a una URL con reintentos en caso de fallo."""
+    print(f"Intentando navegar a {url}...")
+    page.goto(url, timeout=60000)
 
 def extract_daily_tennis_matches(url: str) -> list[dict]:
     """
@@ -39,8 +46,7 @@ def extract_daily_tennis_matches(url: str) -> list[dict]:
         page = browser.new_page(user_agent=random.choice(USER_AGENTS))
 
         try:
-            print(f"Navegando a {url}...")
-            page.goto(url, timeout=60000)
+            go_to_page_with_retries(page, url)
 
             # --- Estrategia de espera robusta ---
             # Esperar a que el contenedor principal de la tabla de partidos sea visible.
@@ -101,8 +107,7 @@ def extract_daily_tennis_matches(url: str) -> list[dict]:
                     continue # Continuar con el siguiente partido
 
         except TimeoutError:
-            print("Error: Timeout esperando a que los elementos cargaran. El sitio puede haber cambiado o estar lento.")
-            # Aquí se podría implementar una lógica de reintento
+            print("Error: Timeout esperando a que los elementos cargaran después de varios reintentos. El sitio puede haber cambiado o estar lento.")
         except Exception as e:
             print(f"Ocurrió un error inesperado durante el scraping: {e}")
         finally:
