@@ -1,0 +1,9 @@
+# Dependencias de Python para el proyecto.
+# Serán instaladas en el contenedor Docker durante el despliegue.
+
+# Para la funcionalidad de scraping web
+playwright
+
+# Para la interacción con la base de datos de Google Cloud Firestore
+google-cloud-firestore
+
