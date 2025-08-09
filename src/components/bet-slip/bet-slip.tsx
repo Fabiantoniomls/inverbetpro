@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Loader2, Trash, X } from 'lucide-react';
+import { Trash2, Loader2, Trash, X, Minimize2, Maximize2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -24,7 +24,7 @@ export function BetSlip() {
   const [stakes, setStakes] = useState<{[key: string]: number}>({});
   const [combinedStake, setCombinedStake] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
@@ -124,12 +124,17 @@ export function BetSlip() {
   if (isMinimized) {
     return (
          <Card 
-            className="fixed bottom-4 right-4 z-50 w-auto shadow-2xl cursor-pointer"
+            className="fixed bottom-4 right-4 z-50 w-auto shadow-2xl cursor-pointer hover:shadow-primary/50 transition-shadow"
             onClick={() => setIsMinimized(false)}
         >
              <CardHeader className="flex-row items-center justify-between p-3">
-                <CardTitle className="text-base mr-4">Cupón de Apuestas</CardTitle>
-                <Badge>{picks.length}</Badge>
+                <div className="flex items-center gap-2">
+                    <CardTitle className="text-base">Cupón de Apuestas</CardTitle>
+                    <Badge>{picks.length}</Badge>
+                </div>
+                 <Button variant="ghost" size="icon" className="h-6 w-6" >
+                    <Maximize2 className="h-4 w-4 text-muted-foreground" />
+                </Button>
             </CardHeader>
         </Card>
     )
@@ -138,23 +143,31 @@ export function BetSlip() {
   return (
     <Card className="fixed bottom-4 right-4 z-50 flex flex-col w-96 max-h-[90vh] shadow-2xl">
         <CardHeader 
-            className="flex-row items-center justify-between p-3 bg-muted/50"
+            className="flex-row items-center justify-between p-3 bg-muted/50 cursor-pointer"
+            onClick={() => setIsMinimized(true)}
         >
-            <CardTitle className="text-base">Cupón de Apuestas ({picks.length})</CardTitle>
+            <div className="flex items-center gap-2">
+                 <CardTitle className="text-sm font-semibold">
+                    {`Cupón (${picks.length})`}
+                    {picks.length > 1 && (
+                        <span className="text-muted-foreground font-medium"> | @ {totalOdds.toFixed(2)}</span>
+                    )}
+                 </CardTitle>
+            </div>
             <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={clearSlip}>
-                    <Trash className="h-4 w-4 text-muted-foreground" />
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); clearSlip(); }}>
+                    <Trash className="h-4 w-4 text-muted-foreground" title="Vaciar cupón" />
                 </Button>
-                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsMinimized(true)}>
-                    <X className="h-4 w-4 text-muted-foreground" />
+                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}>
+                    <Minimize2 className="h-4 w-4 text-muted-foreground" title="Minimizar" />
                 </Button>
             </div>
         </CardHeader>
         
         <Tabs defaultValue="combined" className="w-full flex flex-col flex-1">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="combined">Combinada</TabsTrigger>
-            <TabsTrigger value="simple">Simples</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 rounded-none">
+            <TabsTrigger value="combined" className="rounded-none">Combinada</TabsTrigger>
+            <TabsTrigger value="simple" className="rounded-none">Simples</TabsTrigger>
           </TabsList>
 
           <ScrollArea className="flex-grow">
@@ -177,7 +190,7 @@ export function BetSlip() {
           </ScrollArea>
           
           <TabsContent value="combined" className="mt-0">
-              <CardFooter className="flex-col items-stretch space-y-3 border-t p-3">
+              <CardFooter className="flex-col items-stretch space-y-3 border-t bg-background/95 p-3">
                 <div className="flex justify-between font-bold text-sm">
                     <span>Cuota Total:</span>
                     <span>{totalOdds.toFixed(2)}</span>
@@ -195,7 +208,7 @@ export function BetSlip() {
                     <span className="text-muted-foreground">Ganancia Potencial:</span>
                     <span className="font-semibold text-green-400">${potentialWinnings.toFixed(2)}</span>
                 </div>
-                <Button onClick={() => handleRegisterBets('combined')} disabled={isLoading || !combinedStake || combinedStake <= 0}>
+                <Button onClick={() => handleRegisterBets('combined')} disabled={isLoading || !combinedStake || combinedStake <= 0} className="bg-accent text-accent-foreground hover:bg-accent/90">
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Apostar ${combinedStake > 0 ? combinedStake.toFixed(2) : '0.00'}
                 </Button>
@@ -203,7 +216,7 @@ export function BetSlip() {
           </TabsContent>
 
           <TabsContent value="simple" className="mt-0">
-               <CardFooter className="flex-col items-stretch space-y-3 border-t p-3">
+               <CardFooter className="flex-col items-stretch space-y-3 border-t bg-background/95 p-3">
                    {picks.map(pick => (
                        <div key={`stake-${pick.id}`} className="flex items-center justify-between gap-2">
                            <Label htmlFor={`stake-${pick.id}`} className="text-xs truncate flex-1">{pick.selection}</Label>
@@ -224,7 +237,7 @@ export function BetSlip() {
                         <span className="text-muted-foreground">Ganancia Potencial:</span>
                         <span className="font-semibold text-green-400">${totalSimpleWinnings.toFixed(2)}</span>
                     </div>
-                   <Button onClick={() => handleRegisterBets('simple')} disabled={isLoading || totalSimpleStake <= 0}>
+                   <Button onClick={() => handleRegisterBets('simple')} disabled={isLoading || totalSimpleStake <= 0} className="bg-accent text-accent-foreground hover:bg-accent/90">
                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                        Apostar ${totalSimpleStake > 0 ? totalSimpleStake.toFixed(2) : '0.00'}
                    </Button>
