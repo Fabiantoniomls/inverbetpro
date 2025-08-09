@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { AnalysisVersion, Pick } from '@/lib/types/analysis';
+import type { AnalysisVersion, Pick, MatchAnalysis } from '@/lib/types/analysis';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import ReactMarkdown from 'react-markdown';
@@ -53,6 +54,32 @@ interface VersionCardProps {
     analysisId: string;
 }
 
+// Temporary conversion function. Will be removed once the data structure is fully updated.
+function convertPicksToMatchAnalyses(picks?: Pick[]): MatchAnalysis[] {
+    if (!picks) return [];
+    
+    const analysisMap = new Map<string, MatchAnalysis>();
+
+    for (const pick of picks) {
+        if (!analysisMap.has(pick.match)) {
+            // This is a rough approximation. We assume the other participant's data is not available.
+            // This logic is flawed and is just for backward compatibility display.
+             const otherParticipantName = pick.match.replace(pick.selection, '').replace('vs', '').trim();
+             const placeholderParticipant = { name: otherParticipantName, odds: 1, estimatedProbability: 0, valueCalculated: 0 };
+            
+            analysisMap.set(pick.match, {
+                matchTitle: pick.match,
+                market: pick.market,
+                sport: pick.sport,
+                participantA: { name: pick.selection, odds: pick.odds, estimatedProbability: pick.estimatedProbability || 0, valueCalculated: pick.valueCalculated || 0 },
+                participantB: placeholderParticipant,
+            });
+        }
+    }
+    return Array.from(analysisMap.values());
+}
+
+
 export function VersionCard({ version, analysisId }: VersionCardProps) {
     const { toast } = useToast();
     const [isLoadingCounter, setIsLoadingCounter] = useState(false);
@@ -63,6 +90,10 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
     const [extractedPicks, setExtractedPicks] = useState<Pick[] | null>(null);
 
     const createdAtDate = version.createdAt instanceof Timestamp ? version.createdAt.toDate() : version.createdAt;
+    
+    // This is a temporary measure for backward compatibility
+    const analysesToDisplay = version.matchAnalyses || convertPicksToMatchAnalyses(version.picks);
+
 
     const handleGenerateCounterAnalysis = async () => {
         if (!externalAnalysis.trim()) {
@@ -98,7 +129,7 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                 createdAt: serverTimestamp(),
                 type: "interpelacion" as const,
                 deleted: false,
-                picks: picks || [],
+                picks: picks || [], // Still saving as picks for now
              };
              await addDoc(versionsCollectionRef, newVersionData);
 
@@ -232,10 +263,10 @@ export function VersionCard({ version, analysisId }: VersionCardProps) {
                     </ReactMarkdown>
                 </div>
 
-                {version.picks && version.picks.length > 0 && (
+                {analysesToDisplay && analysesToDisplay.length > 0 && (
                     <div className="space-y-4">
                         <h3 className="text-lg font-semibold">Tabla de Apuestas de Valor</h3>
-                        <ValueBetsTable data={version.picks} />
+                        <ValueBetsTable data={analysesToDisplay} />
                     </div>
                 )}
 

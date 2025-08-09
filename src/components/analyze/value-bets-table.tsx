@@ -10,7 +10,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { Settings2, PlusCircle } from "lucide-react"
+import { PlusCircle } from "lucide-react"
 
 import {
   Table,
@@ -21,74 +21,92 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-import type { Pick } from "@/lib/types/analysis"
+import type { Pick, MatchAnalysis } from "@/lib/types/analysis"
 import { DataTableColumnHeader } from "../history/data-table-column-header"
 import { Button } from "../ui/button"
 import { useBetSlip } from "@/hooks/use-bet-slip"
 import { cn } from "@/lib/utils"
 
 
-export function ValueBetsTable({ data }: { data: Pick[] }) {
+function ParticipantOddsButton({ participant, matchInfo }: { participant: Pick, matchInfo: MatchAnalysis }) {
+    const { addPick, picks: selectedPicks } = useBetSlip();
+    
+    const pickForBetSlip: Pick = {
+        id: '', // The hook will generate an ID
+        sport: matchInfo.sport,
+        match: matchInfo.matchTitle,
+        market: matchInfo.market,
+        selection: participant.name,
+        odds: participant.odds,
+        estimatedProbability: participant.estimatedProbability,
+        valueCalculated: participant.valueCalculated,
+    };
+
+    const isSelected = selectedPicks.some(p => 
+        p.match === pickForBetSlip.match && p.selection === pickForBetSlip.selection
+    );
+
+    return (
+        <Button 
+            variant={isSelected ? "secondary" : "outline"} 
+            size="sm" 
+            onClick={() => addPick(pickForBetSlip)}
+            className={cn("w-24", isSelected && "border-primary")}
+        >
+            {!isSelected && <PlusCircle className="mr-2 h-4 w-4"/>}
+            {participant.odds.toFixed(2)}
+        </Button>
+    )
+}
+
+
+export function ValueBetsTable({ data }: { data: MatchAnalysis[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([
      {
-      id: "valueCalculated",
+      id: "value", // A placeholder, we'll sort manually if needed
       desc: true,
     },
   ])
-  const { addPick, picks: selectedPicks } = useBetSlip();
 
-  const isPickSelected = (pick: Pick) => selectedPicks.some(p => p.id === pick.id);
-
-  const columns: ColumnDef<Pick>[] = [
+  const columns: ColumnDef<MatchAnalysis>[] = [
     {
-      accessorKey: "match",
+      accessorKey: "matchTitle",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Partido" />,
       cell: ({ row }) => {
+        const match = row.original;
         return (
           <div className="flex flex-col">
-            <span className="font-medium max-w-[300px] truncate">{row.original.match}</span>
-             <span className="text-sm text-muted-foreground">{row.original.selection}</span>
+            <span className="font-medium max-w-[300px] truncate">{match.matchTitle}</span>
+             <span className="text-sm text-muted-foreground">{match.market}</span>
           </div>
         )
       },
-      enableSorting: false,
+      enableSorting: true,
     },
     {
-      accessorKey: "odds",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Cuota" />,
+      id: "participantA",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Participante A" />,
       cell: ({ row }) => {
-        const pick = row.original;
-        const isSelected = isPickSelected(pick);
+        const { participantA, ...matchInfo } = row.original;
         return (
-           <Button 
-                variant={isSelected ? "secondary" : "outline"} 
-                size="sm" 
-                onClick={() => addPick(pick)}
-                className={cn("w-24", isSelected && "border-primary")}
-            >
-                {!isSelected && <PlusCircle className="mr-2 h-4 w-4"/>}
-                {pick.odds.toFixed(2)}
-            </Button>
+            <div className="flex items-center justify-between">
+                <span>{participantA.name}</span>
+                <ParticipantOddsButton participant={participantA} matchInfo={matchInfo} />
+            </div>
         )
       },
     },
-     {
-      accessorKey: "estimatedProbability",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Prob. Estimada (%)" />,
+    {
+      id: "participantB",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Participante B" />,
       cell: ({ row }) => {
-          const value = row.original.estimatedProbability;
-          if (value === undefined) return '-';
-          return <span>{value.toFixed(1)}%</span>
-      },
-    },
-      {
-      accessorKey: "valueCalculated",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Valor Calculado (%)" />,
-      cell: ({ row }) => {
-          const value = row.original.valueCalculated;
-          if (value === undefined) return '-';
-          const color = value > 0 ? 'text-green-400' : 'text-red-400';
-          return <span className={`font-bold ${color}`}>{value > 0 ? `+${(value * 100).toFixed(1)}%` : `${(value * 100).toFixed(1)}%`}</span>
+         const { participantB, ...matchInfo } = row.original;
+        return (
+            <div className="flex items-center justify-between">
+                <span>{participantB.name}</span>
+                <ParticipantOddsButton participant={participantB} matchInfo={matchInfo} />
+            </div>
+        )
       },
     },
   ]
@@ -132,7 +150,6 @@ export function ValueBetsTable({ data }: { data: Pick[] }) {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={cn(isPickSelected(row.original) && "bg-muted/50")}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

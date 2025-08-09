@@ -19,6 +19,7 @@ import {
     AnalyzeBatchFromImageOutputSchema,
     PickSchema,
     MainPredictionInsightsSchema,
+    MatchAnalysisSchema,
     type AnalyzeBatchFromImageInput,
     type AnalyzeBatchFromImageOutput,
 } from '@/lib/types/analysis';
@@ -58,7 +59,7 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
   }) },
   output: { schema: z.object({
       analysisReport: z.string().describe("Un informe de texto detallado (en formato Markdown) que explique tu razonamiento, siguiendo la estructura jerárquica estandarizada."),
-      valuePicks: z.array(PickSchema).describe("Un array de objetos, donde cada objeto representa la MEJOR apuesta de valor identificada para cada partido. DEBE rellenar todos los campos del PickSchema."),
+      matchAnalyses: z.array(MatchAnalysisSchema).describe("Un array de objetos, donde cada objeto representa un partido. Para CADA partido, DEBES rellenar los datos de AMBOS participantes (participantA y participantB)."),
       mainPredictionInsights: MainPredictionInsightsSchema.optional().describe("Explainable AI (XAI) insights for the main prediction."),
   }) },
   prompt: `Eres un analista experto en inversiones deportivas de clase mundial. Tu tarea es realizar un análisis cuantitativo y cualitativo completo basado en los datos de los partidos proporcionados. Tu salida DEBE ser un único objeto JSON.
@@ -66,16 +67,15 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
 **Formato de Salida Requerido:**
 
 Genera un objeto JSON que contenga:
-1.  **\`analysisReport\`**: Un informe de texto en formato Markdown que siga ESTRICTAMENTE la siguiente estructura jerárquica:
+1.  **\`analysisReport\`**: Un informe de texto en formato Markdown que siga ESTRICTAMENTE la siguiente estructura jerárquiana:
     *   Un título principal para el deporte (ej. \`## 🎾 Tenis\`).
     *   Para CADA partido, crea una lista numerada (ej. \`1. Carlos Alcaraz vs Jiri Lehecka\`).
     *   Dentro de cada partido, anida una lista con viñetas que contenga:
         *   **Análisis**: Un subtítulo \`o Análisis:\` seguido de viñetas anidadas con tus puntos clave.
-        *   **Probabilidad estimada**: Una viñeta con la probabilidad que estimas para la selección.
         *   **Veredicto**: Una viñeta con tu recomendación final para esa apuesta.
     *   **NO incluyas la Tabla de Valor en este informe de texto.**
 
-2.  **\`valuePicks\`**: Un array de objetos. **CRÍTICO: Para cada partido, identifica y devuelve UNA ÚNICA apuesta de valor (la selección del jugador A o del jugador B que consideres mejor, pero no ambas)**. Para cada pick, rellena TODOS los siguientes campos del schema: \`sport\`, \`match\`, \`market\`, \`selection\`, \`odds\`, \`estimatedProbability\`, \`valueCalculated\`, \`confidenceScore\`, y \`keyFactors\`.
+2.  **\`matchAnalyses\`**: Un array de objetos. Para CADA partido, rellena un objeto con los siguientes campos: \`matchTitle\`, \`market\`, \`sport\`, y un objeto para \`participantA\` y otro para \`participantB\`. Cada participante debe incluir: \`name\`, \`odds\`, \`estimatedProbability\`, y \`valueCalculated\`. **Es CRÍTICO que proporciones los datos para AMBOS participantes en cada partido.**
 
 3.  **\`mainPredictionInsights\`**: (Opcional) Un objeto con los elementos de IA Explicable para la predicción que consideres MÁS importante de todo el cupón.
 
@@ -109,7 +109,7 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
       return {
         extractedMatches: extractedData.matches,
         consolidatedAnalysis: '', // Empty analysis
-        valuePicks: [],
+        matchAnalyses: [],
       };
     }
 
@@ -133,7 +133,7 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
     // Return the final analysis, along with the matches for context.
     return {
         consolidatedAnalysis: analysisResult.output.analysisReport,
-        valuePicks: analysisResult.output.valuePicks,
+        matchAnalyses: analysisResult.output.matchAnalyses,
         mainPredictionInsights: analysisResult.output.mainPredictionInsights,
         extractedMatches: input.extractedMatches, 
     };

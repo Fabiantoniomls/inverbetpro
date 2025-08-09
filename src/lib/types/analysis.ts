@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -37,8 +38,21 @@ export const PickSchema = z.object({
   estimatedProbability: z.number().optional().describe("La probabilidad estimada por la IA, en porcentaje (ej. 58.5 para 58.5%)."),
   confidenceScore: z.number().optional().describe("Puntuación de 1 a 10 sobre la confianza de la IA en su propio análisis."),
   keyFactors: z.array(z.string()).optional().describe("Un array de 2-3 factores clave que más influyeron en la decisión."),
+  // A participant does not have all these fields, so we use a simpler schema here.
+  name: z.string().optional(),
 });
 export type Pick = z.infer<typeof PickSchema>;
+
+// New schema to hold analysis for a full match with both participants
+export const MatchAnalysisSchema = z.object({
+  matchTitle: z.string().describe("The title of the match, e.g., 'Player A vs Player B'."),
+  market: z.string().describe("The betting market, e.g., 'Winner'."),
+  sport: z.enum(['Fútbol', 'Tenis']),
+  participantA: PickSchema.pick({ name: true, odds: true, estimatedProbability: true, valueCalculated: true }).extend({ name: z.string() }),
+  participantB: PickSchema.pick({ name: true, odds: true, estimatedProbability: true, valueCalculated: true }).extend({ name: z.string() }),
+});
+export type MatchAnalysis = z.infer<typeof MatchAnalysisSchema>;
+
 
 export const MainPredictionInsightsSchema = z.object({
     primaryConclusion: z.string().describe("La predicción principal del análisis."),
@@ -54,7 +68,7 @@ export type MainPredictionInsights = z.infer<typeof MainPredictionInsightsSchema
 
 export const AnalyzeBatchFromImageOutputSchema = z.object({
     consolidatedAnalysis: z.string().describe("A single string containing the full, formatted markdown analysis for all matches."),
-    valuePicks: z.array(PickSchema).describe("An array of structured betting picks with positive value, now including XAI fields."),
+    matchAnalyses: z.array(MatchAnalysisSchema).describe("An array of structured analyses for each match, including data for both participants."),
     extractedMatches: z.array(ExtractedMatchSchema).optional().describe("The raw data of matches extracted from the image."),
     mainPredictionInsights: MainPredictionInsightsSchema.optional().describe("Explainable AI (XAI) insights for the main prediction."),
 });

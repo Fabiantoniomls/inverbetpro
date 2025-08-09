@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
 import { deconstructArguments } from '@/ai/flows/deconstruct-arguments';
-import type { AnalyzeBatchFromImageOutput, ExtractedMatch, Pick } from '@/lib/types/analysis';
+import type { AnalyzeBatchFromImageOutput, ExtractedMatch, Pick, MatchAnalysis } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -166,8 +166,8 @@ export function ImageAnalysisUploader() {
     setIsCounterAnalyzing(true);
     try {
         const deconstructedData = await deconstructArguments({
-            inverapuestasAnalysisText: result.consolidatedAnalysis,
-            externalAnalysisText: "Please provide a critical second opinion on this analysis.", // Placeholder for a real external analysis
+            inverapuestasAnalysis: result.consolidatedAnalysis,
+            externalAnalysis: "Please provide a critical second opinion on this analysis.", // Placeholder for a real external analysis
         });
         const { counterAnalysis: newCounterResult } = await counterAnalysis(deconstructedData);
         setCounterResult(newCounterResult);
@@ -191,7 +191,7 @@ export function ImageAnalysisUploader() {
     });
   }
 
- const handleSaveAnalysis = async (analysisText: string, picks: Pick[] | undefined, matches: ExtractedMatch[] | null) => {
+ const handleSaveAnalysis = async (analysisText: string, analyses: MatchAnalysis[] | undefined, matches: ExtractedMatch[] | null) => {
     if (!analysisText || !user) {
         toast({ variant: 'destructive', title: 'Error', description: 'Debes iniciar sesión para guardar un análisis.' });
         return;
@@ -218,6 +218,13 @@ export function ImageAnalysisUploader() {
             currentVersionId: '', // Will be updated
         };
         const analysisDocRef = await addDoc(analysesCollectionRef, newAnalysisData);
+
+        // Convert MatchAnalysis[] to Pick[] before saving
+        const picks: Pick[] = (analyses || []).flatMap(analysis => [
+            { id: '', ...analysis.participantA },
+            { id: '', ...analysis.participantB },
+        ]);
+
 
         // Step 2: Use the new ID to create the first version in the subcollection
         const versionsCollectionRef = collection(db, 'savedAnalyses', analysisDocRef.id, 'versions');
@@ -280,13 +287,13 @@ export function ImageAnalysisUploader() {
   };
 
 
-  const ActionButtons = ({ analysisText, picks, isTop = false }: { analysisText: string, picks: Pick[] | undefined, isTop?: boolean }) => (
+  const ActionButtons = ({ analysisText, analyses, isTop = false }: { analysisText: string, analyses: MatchAnalysis[] | undefined, isTop?: boolean }) => (
     <div className={`flex justify-start pt-4 gap-2 flex-wrap ${isTop ? 'pb-4' : ''}`}>
         <Button variant="outline" onClick={handleReset}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Analizar otra Imagen
         </Button>
-        <Button variant="outline" onClick={() => handleSaveAnalysis(analysisText, picks, extractedMatches)} disabled={isSaving}>
+        <Button variant="outline" onClick={() => handleSaveAnalysis(analysisText, analyses, extractedMatches)} disabled={isSaving}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Guardar Análisis
         </Button>
@@ -391,7 +398,7 @@ export function ImageAnalysisUploader() {
                     </AlertDescription>
                 </Alert>
 
-                <ActionButtons analysisText={result.consolidatedAnalysis} picks={result.valuePicks} isTop={true} />
+                <ActionButtons analysisText={result.consolidatedAnalysis} analyses={result.matchAnalyses} isTop={true} />
 
                 <div className="prose prose-sm dark:prose-invert max-w-none border-t pt-4">
                      <ReactMarkdown
@@ -402,15 +409,15 @@ export function ImageAnalysisUploader() {
                     </ReactMarkdown>
                 </div>
                 
-                {result.valuePicks && result.valuePicks.length > 0 && (
+                {result.matchAnalyses && result.matchAnalyses.length > 0 && (
                     <div className="space-y-4">
                         <h3 className="text-xl font-bold">Tabla de Apuestas de Valor</h3>
-                        <ValueBetsTable data={result.valuePicks} />
+                        <ValueBetsTable data={result.matchAnalyses} />
                     </div>
                 )}
 
 
-                <ActionButtons analysisText={result.consolidatedAnalysis} picks={result.valuePicks} />
+                <ActionButtons analysisText={result.consolidatedAnalysis} analyses={result.matchAnalyses} />
                 
                 {isCounterAnalyzing && (
                      <div className="space-y-6 pt-6">
