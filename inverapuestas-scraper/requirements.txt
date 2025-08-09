@@ -3,7 +3,7 @@
 
 # Para la funcionalidad de scraping web
 playwright
+beautifulsoup4
 
 # Para la interacción con la base de datos de Google Cloud Firestore
 google-cloud-firestore
-
