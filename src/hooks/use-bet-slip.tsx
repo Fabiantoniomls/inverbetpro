@@ -24,48 +24,41 @@ const BetSlipContext = createContext<BetSlipContextType | undefined>(undefined);
 export const BetSlipProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [picks, setPicks] = useState<Pick[]>([]);
   const { toast } = useToast();
-  const prevPicksRef = useRef<Pick[]>([]);
-
-  useEffect(() => {
-    // This effect runs after the picks state has been updated.
-    // We compare the new state with the previous state to determine if a pick was added.
-    if (picks.length > prevPicksRef.current.length) {
-      const addedPick = picks[picks.length - 1];
-      toast({
-        title: "Selección Añadida",
-        description: `${addedPick.selection} @ ${addedPick.odds.toFixed(2)}`,
-      });
-    }
-    // Update the ref to the current picks for the next render.
-    prevPicksRef.current = picks;
-  }, [picks, toast]);
 
   const addPick = useCallback((pick: Omit<Pick, 'id'>) => {
-    setPicks(prevPicks => {
-      if (prevPicks.length >= MAX_PICKS) {
-        toast({
-          variant: "destructive",
-          title: "Límite de selecciones alcanzado",
-          description: `No puedes añadir más de ${MAX_PICKS} selecciones al cupón.`,
-        });
-        return prevPicks;
-      }
-      
-      const newPickId = generatePickId(pick);
-      const isDuplicate = prevPicks.some(p => p.id === newPickId);
-      
-      if (isDuplicate) {
-         toast({
-          variant: "default",
-          title: "Selección ya en el cupón",
-          description: "Ya has añadido esta apuesta al cupón.",
-        });
-        return prevPicks;
-      }
-      
-      return [...prevPicks, { ...pick, id: newPickId }];
+    const newPickId = generatePickId(pick);
+
+    // Check for limits and duplicates *before* calling setPicks
+    if (picks.length >= MAX_PICKS) {
+      toast({
+        variant: "destructive",
+        title: "Límite de selecciones alcanzado",
+        description: `No puedes añadir más de ${MAX_PICKS} selecciones al cupón.`,
+      });
+      return; // Exit without updating state
+    }
+    
+    const isDuplicate = picks.some(p => p.id === newPickId);
+
+    if (isDuplicate) {
+      toast({
+        variant: "default",
+        title: "La selección ya está en el cupón",
+        description: "Puedes eliminarla desde el cupón de apuestas.",
+      });
+      return; // Exit without updating state
+    }
+
+    // If all checks pass, then update state and show success toast
+    setPicks(prevPicks => [...prevPicks, { ...pick, id: newPickId }]);
+    
+    toast({
+      title: "Selección Añadida",
+      description: `${pick.selection} @ ${pick.odds.toFixed(2)}`,
     });
-  }, [toast]);
+    
+  }, [picks, toast]);
+
 
   const removePick = useCallback((pickId: string) => {
     setPicks(prevPicks => prevPicks.filter(p => p.id !== pickId));
