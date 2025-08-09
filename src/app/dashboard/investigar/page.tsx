@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import leaguesData from '@/data/leagues.json';
-import Link from "next/link";
 import { ArrowRight, Trophy, Flame } from "lucide-react";
 import Image from 'next/image';
 
@@ -75,15 +74,13 @@ export default function InvestigatePage() {
                     </CardHeader>
                     <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         {popularLeagues.map((league) => (
-                             <Link href={league.url} target="_blank" rel="noopener noreferrer" key={league.name}>
-                                <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col items-center justify-center text-center h-full">
-                                    <div className="w-16 h-16 mb-4 relative">
-                                        <Image src={`https://placehold.co/64x64.png`} data-ai-hint={league.dataAiHint} alt={`${league.name} logo`} width={64} height={64} className="object-contain" />
-                                    </div>
-                                    <p className="font-semibold text-sm">{league.name}</p>
-                                    <p className="text-xs text-muted-foreground">{league.country}</p>
+                             <div key={league.name} className="p-4 border rounded-lg flex flex-col items-center justify-center text-center h-full">
+                                <div className="w-16 h-16 mb-4 relative">
+                                    <Image src={`https://placehold.co/64x64.png`} data-ai-hint={league.dataAiHint} alt={`${league.name} logo`} width={64} height={64} className="object-contain" />
                                 </div>
-                             </Link>
+                                <p className="font-semibold text-sm">{league.name}</p>
+                                <p className="text-xs text-muted-foreground">{league.country}</p>
+                            </div>
                         ))}
                     </CardContent>
                 </Card>
@@ -106,11 +103,10 @@ export default function InvestigatePage() {
                                     <AccordionContent>
                                         <div className="space-y-2 pl-4">
                                             {leagues.map((league) => (
-                                                <Link href={league.url} target="_blank" rel="noopener noreferrer" key={league.name} 
-                                                    className="flex justify-between items-center p-3 rounded-md hover:bg-muted transition-colors">
+                                                <div key={league.name} className="flex justify-between items-center p-3 rounded-md">
                                                     <span>{league.name}</span>
                                                     <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                                </Link>
+                                                </div>
                                             ))}
                                         </div>
                                     </AccordionContent>
@@ -134,15 +130,13 @@ export default function InvestigatePage() {
                     </CardHeader>
                     <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                         {popularTournaments.map((tournament) => (
-                             <Link href={tournament.url} target="_blank" rel="noopener noreferrer" key={tournament.name}>
-                                <div className="p-4 border rounded-lg hover:bg-muted/50 transition-colors flex flex-col items-center justify-center text-center h-full">
-                                    <div className="w-16 h-16 mb-4 relative">
-                                        <Image src={`https://placehold.co/64x64.png`} data-ai-hint={tournament.dataAiHint} alt={`${tournament.name} logo`} width={64} height={64} className="object-contain" />
-                                    </div>
-                                    <p className="font-semibold text-sm">{tournament.name}</p>
-                                    <p className="text-xs text-muted-foreground">{tournament.location}</p>
+                            <div key={tournament.name} className="p-4 border rounded-lg flex flex-col items-center justify-center text-center h-full">
+                                <div className="w-16 h-16 mb-4 relative">
+                                    <Image src={`https://placehold.co/64x64.png`} data-ai-hint={tournament.dataAiHint} alt={`${tournament.name} logo`} width={64} height={64} className="object-contain" />
                                 </div>
-                             </Link>
+                                <p className="font-semibold text-sm">{tournament.name}</p>
+                                <p className="text-xs text-muted-foreground">{tournament.location}</p>
+                            </div>
                         ))}
                     </CardContent>
                 </Card>
