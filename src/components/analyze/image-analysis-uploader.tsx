@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { analyzeBatchFromImage } from '@/ai/flows/analyze-batch-from-image';
 import { counterAnalysis } from '@/ai/flows/counter-analysis';
 import { deconstructArguments } from '@/ai/flows/deconstruct-arguments';
-import type { AnalyzeBatchFromImageOutput, ExtractedMatch, Pick, MatchAnalysis } from '@/lib/types/analysis';
+import type { AnalyzeBatchFromImageOutput, ExtractedMatch, Pick, MatchAnalysis, AnalysisVersion } from '@/lib/types/analysis';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -219,24 +219,17 @@ export function ImageAnalysisUploader() {
         };
         const analysisDocRef = await addDoc(analysesCollectionRef, newAnalysisData);
 
-        // Convert MatchAnalysis[] to Pick[] before saving
-        const picks: Pick[] = (analyses || []).flatMap(analysis => [
-            { id: '', ...analysis.participantA },
-            { id: '', ...analysis.participantB },
-        ]);
-
-
         // Step 2: Use the new ID to create the first version in the subcollection
         const versionsCollectionRef = collection(db, 'savedAnalyses', analysisDocRef.id, 'versions');
-        const newVersionData = {
+        const newVersionData: Partial<AnalysisVersion> = {
             analysisId: analysisDocRef.id,
-            author: "ai" as const,
+            author: "ai",
             authorId: 'inverapuestas-pro-model',
             contentMarkdown: analysisText,
             createdAt: serverTimestamp(),
-            type: "original" as const,
+            type: "original",
             deleted: false,
-            picks: picks || [],
+            matchAnalyses: analyses || [],
         };
         const versionDocRef = await addDoc(versionsCollectionRef, newVersionData);
         

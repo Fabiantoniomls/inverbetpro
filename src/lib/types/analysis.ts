@@ -43,13 +43,21 @@ export const PickSchema = z.object({
 });
 export type Pick = z.infer<typeof PickSchema>;
 
+// This defines the data for ONE participant, to be nested inside MatchAnalysisSchema
+const ParticipantAnalysisSchema = z.object({
+  name: z.string().describe("The name of the participant."),
+  odds: z.number().describe("The decimal odds for this participant."),
+  estimatedProbability: z.number().describe("The AI's estimated probability for this participant to win (e.g., 58.5 for 58.5%)."),
+  valueCalculated: z.number().describe("The calculated expected value (EV) for betting on this participant.")
+});
+
 // New schema to hold analysis for a full match with both participants
 export const MatchAnalysisSchema = z.object({
   matchTitle: z.string().describe("The title of the match, e.g., 'Player A vs Player B'."),
   market: z.string().describe("The betting market, e.g., 'Winner'."),
   sport: z.enum(['Fútbol', 'Tenis']),
-  participantA: PickSchema.pick({ name: true, odds: true, estimatedProbability: true, valueCalculated: true }).extend({ name: z.string() }),
-  participantB: PickSchema.pick({ name: true, odds: true, estimatedProbability: true, valueCalculated: true }).extend({ name: z.string() }),
+  participantA: ParticipantAnalysisSchema,
+  participantB: ParticipantAnalysisSchema,
 });
 export type MatchAnalysis = z.infer<typeof MatchAnalysisSchema>;
 
@@ -137,4 +145,5 @@ export interface AnalysisVersion {
         summary: string;
         learnings: string[];
     };
+    matchAnalyses?: MatchAnalysis[];
 }

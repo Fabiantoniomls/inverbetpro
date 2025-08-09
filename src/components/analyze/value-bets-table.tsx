@@ -28,7 +28,7 @@ import { useBetSlip } from "@/hooks/use-bet-slip"
 import { cn } from "@/lib/utils"
 
 
-function ParticipantOddsButton({ participant, matchInfo }: { participant: Pick, matchInfo: MatchAnalysis }) {
+function ParticipantOddsButton({ participant, matchInfo }: { participant: Pick, matchInfo: Omit<MatchAnalysis, 'participantA' | 'participantB'> }) {
     const { addPick, picks: selectedPicks } = useBetSlip();
     
     const pickForBetSlip: Pick = {
@@ -51,10 +51,15 @@ function ParticipantOddsButton({ participant, matchInfo }: { participant: Pick, 
             variant={isSelected ? "secondary" : "outline"} 
             size="sm" 
             onClick={() => addPick(pickForBetSlip)}
-            className={cn("w-24", isSelected && "border-primary")}
+            className={cn("w-full justify-start", isSelected && "border-primary")}
         >
-            {!isSelected && <PlusCircle className="mr-2 h-4 w-4"/>}
-            {participant.odds.toFixed(2)}
+            <div className="flex justify-between items-center w-full">
+                <span>{participant.name}</span>
+                <div className="flex items-center gap-2">
+                     {!isSelected && <PlusCircle className="h-4 w-4"/>}
+                    <span className="font-semibold">{participant.odds.toFixed(2)}</span>
+                </div>
+            </div>
         </Button>
     )
 }
@@ -63,56 +68,72 @@ function ParticipantOddsButton({ participant, matchInfo }: { participant: Pick, 
 export function ValueBetsTable({ data }: { data: MatchAnalysis[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([
      {
-      id: "value", // A placeholder, we'll sort manually if needed
+      id: "valueCalculated",
       desc: true,
     },
   ])
 
-  const columns: ColumnDef<MatchAnalysis>[] = [
+  // We are transforming the data to create a row for each participant, not each match.
+  const tableData = React.useMemo(() => {
+    return data.flatMap(match => [
+      { ...match.participantA, matchInfo: match },
+      { ...match.participantB, matchInfo: match },
+    ]);
+  }, [data]);
+
+
+  const columns: ColumnDef<typeof tableData[0]>[] = [
     {
-      accessorKey: "matchTitle",
+      id: "match",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Partido" />,
       cell: ({ row }) => {
-        const match = row.original;
+        const { matchInfo } = row.original;
         return (
           <div className="flex flex-col">
-            <span className="font-medium max-w-[300px] truncate">{match.matchTitle}</span>
-             <span className="text-sm text-muted-foreground">{match.market}</span>
+            <span className="font-medium max-w-[300px] truncate">{matchInfo.matchTitle}</span>
+            <span className="text-sm text-muted-foreground">{matchInfo.market}</span>
           </div>
         )
       },
       enableSorting: true,
     },
     {
-      id: "participantA",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Participante A" />,
+      id: "estimatedProbability",
+      accessorKey: "estimatedProbability",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Prob. IA" />,
       cell: ({ row }) => {
-        const { participantA, ...matchInfo } = row.original;
-        return (
-            <div className="flex items-center justify-between">
-                <span>{participantA.name}</span>
-                <ParticipantOddsButton participant={participantA} matchInfo={matchInfo} />
-            </div>
-        )
+        const prob = row.original.estimatedProbability;
+        if (prob === undefined) return <span className="text-muted-foreground">-</span>;
+        return <span>{prob.toFixed(1)}%</span>;
       },
+       sortingFn: 'basic',
+    },
+     {
+      id: "valueCalculated",
+      accessorKey: "valueCalculated",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Valor (EV)" />,
+      cell: ({ row }) => {
+        const value = row.original.valueCalculated;
+        if (value === undefined) return <span className="text-muted-foreground">-</span>;
+        const color = value > 0 ? 'text-green-400' : 'text-red-400';
+        return <span className={cn("font-medium", color)}>{(value * 100).toFixed(1)}%</span>
+      },
+      sortingFn: 'basic',
     },
     {
-      id: "participantB",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Participante B" />,
+      id: "selection",
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Selección y Cuota" />,
       cell: ({ row }) => {
-         const { participantB, ...matchInfo } = row.original;
-        return (
-            <div className="flex items-center justify-between">
-                <span>{participantB.name}</span>
-                <ParticipantOddsButton participant={participantB} matchInfo={matchInfo} />
-            </div>
-        )
+        const participant = row.original;
+        const { matchInfo } = participant;
+        const { participantA, participantB, ...restOfMatchInfo } = matchInfo;
+        return <ParticipantOddsButton participant={participant} matchInfo={restOfMatchInfo} />
       },
     },
   ]
 
   const table = useReactTable({
-    data,
+    data: tableData,
     columns,
     state: {
       sorting,

@@ -59,13 +59,18 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
   }) },
   output: { schema: z.object({
       analysisReport: z.string().describe("Un informe de texto detallado (en formato Markdown) que explique tu razonamiento, siguiendo la estructura jerárquica estandarizada."),
-      matchAnalyses: z.array(MatchAnalysisSchema).describe("Un array de objetos, donde cada objeto representa un partido. Para CADA partido, DEBES rellenar los datos de AMBOS participantes (participantA y participantB)."),
+      matchAnalyses: z.array(MatchAnalysisSchema).describe("Un array de objetos, donde cada objeto representa un partido. Para CADA partido, DEBES rellenar los datos de AMBOS participantes (participantA y participantB), incluyendo nombre, cuota, probabilidad estimada, y valor calculado."),
       mainPredictionInsights: MainPredictionInsightsSchema.optional().describe("Explainable AI (XAI) insights for the main prediction."),
   }) },
-  prompt: `Eres un analista experto en inversiones deportivas de clase mundial. Tu tarea es realizar un análisis cuantitativo y cualitativo completo basado en los datos de los partidos proporcionados. Tu salida DEBE ser un único objeto JSON.
+  prompt: `Eres un analista experto en inversiones deportivas de clase mundial. Tu tarea es realizar un análisis cuantitativo y cualitativo completo basado en los datos de los partidos proporcionados y generar un objeto JSON.
+
+**Análisis Requerido:**
+Para cada partido, realiza lo siguiente:
+1.  Estima la **probabilidad real** (en porcentaje, ej. 55.5) de que cada participante gane.
+2.  Calcula el **valor esperado (EV)** para la apuesta de cada participante usando la fórmula: \`EV = (Probabilidad Real / 100) * Cuota - 1\`. El resultado debe ser un decimal (ej. 0.15 para un 15% de valor).
+3.  Escribe un análisis cualitativo breve para cada partido.
 
 **Formato de Salida Requerido:**
-
 Genera un objeto JSON que contenga:
 1.  **\`analysisReport\`**: Un informe de texto en formato Markdown que siga ESTRICTAMENTE la siguiente estructura jerárquiana:
     *   Un título principal para el deporte (ej. \`## 🎾 Tenis\`).
