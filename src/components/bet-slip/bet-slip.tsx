@@ -143,8 +143,7 @@ export function BetSlip() {
   return (
     <Card className="fixed bottom-4 right-4 z-50 flex flex-col w-96 max-h-[90vh] shadow-2xl">
         <CardHeader 
-            className="flex-row items-center justify-between p-3 bg-muted/50 cursor-pointer"
-            onClick={() => setIsMinimized(true)}
+            className="flex-row items-center justify-between p-3 bg-muted/50"
         >
             <div className="flex items-center gap-2">
                  <CardTitle className="text-sm font-semibold">
@@ -173,16 +172,21 @@ export function BetSlip() {
           <ScrollArea className="flex-grow">
             <CardContent className="p-3 space-y-2">
                 {picks.map(pick => (
-                    <div key={pick.id} className="text-sm p-2 border rounded-md relative group">
-                        <div className="flex justify-between items-start">
-                            <div className="pr-8">
-                                <p className="font-semibold text-primary">{pick.selection}</p>
-                                <p className="text-xs text-muted-foreground">{pick.market} - {pick.match}</p>
-                            </div>
-                            <Badge variant="outline" className="text-sm font-bold">{pick.odds.toFixed(2)}</Badge>
+                    <div key={pick.id} className="text-sm p-2 border rounded-md relative group/selection">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="font-semibold text-primary">{pick.selection}</span>
+                            <span className="font-bold">{pick.odds.toFixed(2)}</span>
                         </div>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 absolute top-1 right-1 opacity-50 group-hover:opacity-100" onClick={() => removePick(pick.id)}>
-                            <Trash2 className="h-3 w-3 text-destructive" />
+                         <p className="text-xs text-muted-foreground">{pick.market}</p>
+                         <p className="text-xs text-muted-foreground truncate">{pick.match}</p>
+
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-5 w-5 absolute top-1 right-1 opacity-0 group-hover/selection:opacity-100" 
+                            onClick={() => removePick(pick.id)}
+                        >
+                            <X className="h-3 w-3 text-destructive" />
                         </Button>
                     </div>
                 ))}
