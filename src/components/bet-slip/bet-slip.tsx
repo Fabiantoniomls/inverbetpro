@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Trash, X, Minimize2, Maximize2, Loader2, Football, TennisBall } from 'lucide-react';
+import { Trash, X, Minimize2, Maximize2, Loader2, Goal, Circle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -142,8 +141,8 @@ export function BetSlip() {
   }
 
   const SportIcon = ({ sport }: { sport: 'Fútbol' | 'Tenis' }) => {
-    if (sport === 'Fútbol') return <Football className="h-4 w-4 text-muted-foreground" />;
-    if (sport === 'Tenis') return <TennisBall className="h-4 w-4 text-muted-foreground" />;
+    if (sport === 'Fútbol') return <Goal className="h-4 w-4 text-muted-foreground" />;
+    if (sport === 'Tenis') return <Circle className="h-4 w-4 text-muted-foreground" />;
     return null;
   };
 
@@ -262,8 +261,7 @@ export function BetSlip() {
                     <span className="font-semibold text-green-400">${potentialWinnings.toFixed(2)}</span>
                 </div>
                 <Button onClick={() => handleRegisterBets('combined')} disabled={isLoading || !combinedStake || combinedStake <= 0} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Apostar ${combinedStake > 0 ? combinedStake.toFixed(2) : '0.00'}
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `Apostar $${(combinedStake || 0).toFixed(2)}`}
                 </Button>
              </CardFooter>
           </TabsContent>
@@ -291,8 +289,7 @@ export function BetSlip() {
                         <span className="font-semibold text-green-400">${totalSimpleWinnings.toFixed(2)}</span>
                     </div>
                    <Button onClick={() => handleRegisterBets('simple')} disabled={isLoading || totalSimpleStake <= 0} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                       Apostar ${totalSimpleStake > 0 ? totalSimpleStake.toFixed(2) : '0.00'}
+                       {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : `Apostar $${(totalSimpleStake || 0).toFixed(2)}`}
                    </Button>
                </CardFooter>
           </TabsContent>
