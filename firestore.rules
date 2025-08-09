@@ -2,7 +2,7 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  
+
     // Reglas para la configuración de staking de los usuarios
     match /userSettings/{userId}/staking/config {
       // Los usuarios solo pueden leer y escribir su propia configuración de staking.
@@ -11,16 +11,20 @@ service cloud.firestore {
 
     // Reglas para las apuestas de los usuarios
     match /bets/{betId} {
-      // Los usuarios pueden crear, leer, actualizar y eliminar sus propias apuestas.
-      allow read, create, update, delete: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Permite a un usuario leer/eliminar sus apuestas si el UID coincide.
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Permite a un usuario crear una apuesta si el UID del nuevo documento coincide con su UID.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
 
     // Reglas para los análisis guardados
     match /savedAnalyses/{analysisId} {
-      // Los usuarios pueden leer y escribir sus propios análisis.
-      allow read, create, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+       // Permite a un usuario leer/eliminar sus análisis si el UID coincide.
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Permite a un usuario crear un análisis si el UID del nuevo documento coincide con su UID.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
       
-      // REGLA CRÍTICA AÑADIDA: Reglas para la subcolección de versiones
+      // REGLA CRÍTICA AÑADIDA: Reglas para la subcolección de versiones.
       match /versions/{versionId} {
         // Un usuario puede leer/escribir una versión si es el propietario del análisis padre.
         allow read, create, update, delete: if request.auth != null && get(/databases/$(database)/documents/savedAnalyses/$(analysisId)).data.userId == request.auth.uid;
