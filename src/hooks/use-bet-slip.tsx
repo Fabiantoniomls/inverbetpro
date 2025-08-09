@@ -28,28 +28,24 @@ export const BetSlipProvider: React.FC<{children: React.ReactNode}> = ({ childre
   const addPick = useCallback((pick: Omit<Pick, 'id'>) => {
     const newPickId = generatePickId(pick);
 
-    // Check for limits and duplicates *before* calling setPicks
+    const isDuplicate = picks.some(p => p.id === newPickId);
+    if (isDuplicate) {
+      toast({
+        variant: "default",
+        title: "La selección ya está en el cupón",
+      });
+      return; 
+    }
+
     if (picks.length >= MAX_PICKS) {
       toast({
         variant: "destructive",
         title: "Límite de selecciones alcanzado",
         description: `No puedes añadir más de ${MAX_PICKS} selecciones al cupón.`,
       });
-      return; // Exit without updating state
+      return;
     }
     
-    const isDuplicate = picks.some(p => p.id === newPickId);
-
-    if (isDuplicate) {
-      toast({
-        variant: "default",
-        title: "La selección ya está en el cupón",
-        description: "Puedes eliminarla desde el cupón de apuestas.",
-      });
-      return; // Exit without updating state
-    }
-
-    // If all checks pass, then update state and show success toast
     setPicks(prevPicks => [...prevPicks, { ...pick, id: newPickId }]);
     
     toast({
@@ -62,11 +58,21 @@ export const BetSlipProvider: React.FC<{children: React.ReactNode}> = ({ childre
 
   const removePick = useCallback((pickId: string) => {
     setPicks(prevPicks => prevPicks.filter(p => p.id !== pickId));
-  }, []);
+     toast({
+        title: "Selección Eliminada",
+        description: `La selección ha sido eliminada del cupón.`,
+      });
+  }, [toast]);
 
   const clearSlip = useCallback(() => {
-    setPicks([]);
-  }, []);
+    if (picks.length > 0) {
+      setPicks([]);
+      toast({
+          title: "Cupón Vaciado",
+          description: `Se han eliminado todas las selecciones.`,
+        });
+    }
+  }, [picks.length, toast]);
   
   return (
     <BetSlipContext.Provider value={{ picks, addPick, removePick, clearSlip }}>

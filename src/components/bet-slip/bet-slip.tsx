@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 export function BetSlip() {
   const { picks, removePick, clearSlip } = useBetSlip();
   const [stakes, setStakes] = useState<{[key: string]: number}>({});
-  const [combinedStake, setCombinedStake] = useState<number>(10);
+  const [combinedStake, setCombinedStake] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const { user } = useAuth();
@@ -30,7 +30,7 @@ export function BetSlip() {
   const router = useRouter();
   
   const totalOdds = useMemo(() => picks.reduce((acc, pick) => acc * pick.odds, 1), [picks]);
-  const potentialWinnings = useMemo(() => combinedStake * totalOdds, [combinedStake, totalOdds]);
+  const potentialWinnings = useMemo(() => (combinedStake || 0) * totalOdds, [combinedStake, totalOdds]);
   
   const totalSimpleStake = useMemo(() => Object.values(stakes).reduce((acc, s) => acc + (s || 0), 0), [stakes]);
   const totalSimpleWinnings = useMemo(() => {
@@ -185,9 +185,9 @@ export function BetSlip() {
                 <div className="flex items-center justify-between">
                     <Label htmlFor="stake-combined" className="text-sm">Importe:</Label>
                     <Input 
-                        id="stake-combined" type="number" value={combinedStake}
+                        id="stake-combined" type="number" value={combinedStake || ''}
                         onChange={(e) => handleCombinedStakeChange(e.target.value)}
-                        placeholder="10.00" className="h-8 w-24 text-right"
+                        placeholder="0.00" className="h-8 w-24 text-right"
                     />
                 </div>
                 <Separator />
@@ -195,9 +195,9 @@ export function BetSlip() {
                     <span className="text-muted-foreground">Ganancia Potencial:</span>
                     <span className="font-semibold text-green-400">${potentialWinnings.toFixed(2)}</span>
                 </div>
-                <Button onClick={() => handleRegisterBets('combined')} disabled={isLoading || combinedStake <= 0}>
+                <Button onClick={() => handleRegisterBets('combined')} disabled={isLoading || !combinedStake || combinedStake <= 0}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Apostar ${combinedStake.toFixed(2)}
+                    Apostar ${combinedStake > 0 ? combinedStake.toFixed(2) : '0.00'}
                 </Button>
              </CardFooter>
           </TabsContent>
@@ -226,7 +226,7 @@ export function BetSlip() {
                     </div>
                    <Button onClick={() => handleRegisterBets('simple')} disabled={isLoading || totalSimpleStake <= 0}>
                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                       Apostar ${totalSimpleStake.toFixed(2)}
+                       Apostar ${totalSimpleStake > 0 ? totalSimpleStake.toFixed(2) : '0.00'}
                    </Button>
                </CardFooter>
           </TabsContent>
