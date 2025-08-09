@@ -23,6 +23,7 @@ import {
     type AnalyzeBatchFromImageInput,
     type AnalyzeBatchFromImageOutput,
 } from '@/lib/types/analysis';
+import { getPlayerStats, getTeamStats } from '@/services/historical-data-service';
 
 export async function analyzeBatchFromImage(input: AnalyzeBatchFromImageInput): Promise<AnalyzeBatchFromImageOutput> {
   return analyzeBatchFromImageFlow(input);
@@ -56,6 +57,7 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
   input: { schema: z.object({ 
     matchesJson: z.string(),
     surface: z.string().describe("The playing surface (Hard, Clay, or Grass). This is a CRITICAL factor for tennis matches."),
+    historicalData: z.string().describe("Relevant historical data for the participants involved."),
   }) },
   output: { schema: z.object({
       analysisReport: z.string().describe("Un informe de texto detallado (en formato Markdown) que explique tu razonamiento, siguiendo la estructura jerárquica estandarizada."),
@@ -64,11 +66,17 @@ const consolidatedAnalysisPrompt = ai.definePrompt({
   }) },
   prompt: `Eres un analista experto en inversiones deportivas de clase mundial. Tu tarea es realizar un análisis cuantitativo y cualitativo completo basado en los datos de los partidos proporcionados y generar un objeto JSON.
 
+**Fuente de Datos Primaria:**
+Utiliza los siguientes datos históricos como la fuente principal y más fiable para tu análisis. Basa tus conclusiones en estas estadísticas.
+\`\`\`json
+{{{historicalData}}}
+\`\`\`
+
 **Análisis Requerido:**
 Para cada partido, realiza lo siguiente:
-1.  Estima la **probabilidad real** (en porcentaje, ej. 55.5) de que cada participante gane.
+1.  Estima la **probabilidad real** (en porcentaje, ej. 55.5) de que cada participante gane, basándote en los datos históricos proporcionados.
 2.  Calcula el **valor esperado (EV)** para la apuesta de cada participante usando la fórmula: \`EV = (Probabilidad Real / 100) * Cuota - 1\`. El resultado debe ser un decimal (ej. 0.15 para un 15% de valor).
-3.  Escribe un análisis cualitativo breve para cada partido.
+3.  Escribe un análisis cualitativo breve para cada partido, haciendo referencia a los datos históricos.
 
 **Formato de Salida Requerido:**
 Genera un objeto JSON que contenga:
@@ -76,7 +84,7 @@ Genera un objeto JSON que contenga:
     *   Un título principal para el deporte (ej. \`## 🎾 Tenis\`).
     *   Para CADA partido, crea una lista numerada (ej. \`1. Carlos Alcaraz vs Jiri Lehecka\`).
     *   Dentro de cada partido, anida una lista con viñetas que contenga:
-        *   **Análisis**: Un subtítulo \`o Análisis:\` seguido de viñetas anidadas con tus puntos clave.
+        *   **Análisis**: Un subtítulo \`o Análisis:\` seguido de viñetas anidadas con tus puntos clave basados en los datos históricos.
         *   **Veredicto**: Una viñeta con tu recomendación final para esa apuesta.
     *   **NO incluyas la Tabla de Valor en este informe de texto.**
 
@@ -86,7 +94,7 @@ Genera un objeto JSON que contenga:
 
 Analiza los siguientes datos y genera la salida JSON completa y estructurada como se ha especificado. Para los partidos de tenis, un factor CRÍTICO es la superficie de juego: **{{{surface}}}**.
 
-Datos de los Partidos:
+Datos de los Partidos del Cupón:
 \`\`\`json
 {{{matchesJson}}}
 \`\`\`
@@ -119,14 +127,33 @@ const analyzeBatchFromImageFlow = ai.defineFlow(
     }
 
     // If 'surface' IS provided, it means the user has confirmed it, and we proceed with analysis.
-    // The matches must be passed in the input from the frontend.
     if (!input.extractedMatches) {
         throw new Error("Los datos de los partidos extraídos son necesarios para el análisis.");
     }
+    
+    // Fetch historical data for all participants
+    const historicalData: Record<string, any> = {};
+    for (const match of input.extractedMatches) {
+        const participants = match.participants.split(' - ').map(p => p.trim());
+        for (const participantName of participants) {
+            if (historicalData[participantName]) continue; // Avoid duplicate lookups
+            let stats = null;
+            if (match.sport === 'Tenis') {
+                stats = await getPlayerStats(participantName);
+            } else if (match.sport === 'Fútbol') {
+                stats = await getTeamStats(participantName);
+            }
+            if (stats) {
+                historicalData[participantName] = stats;
+            }
+        }
+    }
+
 
     const analysisInput = { 
         matchesJson: JSON.stringify(input.extractedMatches, null, 2),
-        surface: input.surface
+        surface: input.surface,
+        historicalData: JSON.stringify(historicalData, null, 2)
     };
 
     const analysisResult = await consolidatedAnalysisPrompt(analysisInput);
