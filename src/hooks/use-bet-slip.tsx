@@ -6,6 +6,12 @@ import { useToast } from './use-toast';
 
 const MAX_PICKS = 15;
 
+// Function to generate a consistent, unique ID for a pick based on its content
+const generatePickId = (pick: Omit<Pick, 'id'>) => {
+  return `${pick.match}-${pick.market}-${pick.selection}`.replace(/\s+/g, '-').toLowerCase();
+};
+
+
 interface BetSlipContextType {
   picks: Pick[];
   addPick: (pick: Pick) => void;
@@ -18,8 +24,23 @@ const BetSlipContext = createContext<BetSlipContextType | undefined>(undefined);
 export const BetSlipProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [picks, setPicks] = useState<Pick[]>([]);
   const { toast } = useToast();
-  
-  const addPick = useCallback((pick: Pick) => {
+  const prevPicksRef = useRef<Pick[]>([]);
+
+  useEffect(() => {
+    // This effect runs after the picks state has been updated.
+    // We compare the new state with the previous state to determine if a pick was added.
+    if (picks.length > prevPicksRef.current.length) {
+      const addedPick = picks[picks.length - 1];
+      toast({
+        title: "Selección Añadida",
+        description: `${addedPick.selection} @ ${addedPick.odds.toFixed(2)}`,
+      });
+    }
+    // Update the ref to the current picks for the next render.
+    prevPicksRef.current = picks;
+  }, [picks, toast]);
+
+  const addPick = useCallback((pick: Omit<Pick, 'id'>) => {
     setPicks(prevPicks => {
       if (prevPicks.length >= MAX_PICKS) {
         toast({
@@ -30,7 +51,9 @@ export const BetSlipProvider: React.FC<{children: React.ReactNode}> = ({ childre
         return prevPicks;
       }
       
-      const isDuplicate = prevPicks.some(p => p.id === pick.id);
+      const newPickId = generatePickId(pick);
+      const isDuplicate = prevPicks.some(p => p.id === newPickId);
+      
       if (isDuplicate) {
          toast({
           variant: "default",
@@ -40,11 +63,7 @@ export const BetSlipProvider: React.FC<{children: React.ReactNode}> = ({ childre
         return prevPicks;
       }
       
-      toast({
-        title: "Selección Añadida",
-        description: `${pick.selection} @ ${pick.odds.toFixed(2)}`,
-      });
-      return [...prevPicks, pick];
+      return [...prevPicks, { ...pick, id: newPickId }];
     });
   }, [toast]);
 
